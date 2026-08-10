@@ -24,6 +24,7 @@ jobs:
           node tests/scheduler2.test.js
           node tests/live-capacity.test.js
           node tests/time-aware-core.test.js
+          node tests/late-wake-policy.test.js
       - name: Guard against known freeze and late-wake regressions
         run: |
           node <<'NODE'
