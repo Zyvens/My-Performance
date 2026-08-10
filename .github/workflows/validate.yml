@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance]
+    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection]
 
 jobs:
   validate:
@@ -27,6 +27,7 @@ jobs:
           node --check notifications.js
           node --check narrator.js
           node --check day-controls.js
+          node --check weekend-protection.js
           node --check sw.js
       - name: Validate quest catalog
         run: |
@@ -55,5 +56,9 @@ jobs:
           if(!day.includes("GSA:{title:'GSA — avanço mínimo diário'"))throw new Error('Daily GSA minimum missing');
           if(!day.includes("Estudos:{title:'Estudos — sessão mínima diária'"))throw new Error('Daily study minimum missing');
           if(!day.includes('EXTRA_MIN=120')||!day.includes('MIN_SLEEP_HOURS=6'))throw new Error('Emergency day rules missing');
+          const week=fs.readFileSync('weekend-protection.js','utf8');
+          if(!week.includes("Sexta encerra às 18:00"))throw new Error('Friday cutoff missing');
+          if(!week.includes("Sábado encerra às 12:00"))throw new Error('Saturday cutoff missing');
+          if(!week.includes("Domingo protegido: sem cronograma"))throw new Error('Sunday protection missing');
           console.log(`Validated ${qs.length} quests`,counts);
           NODE
