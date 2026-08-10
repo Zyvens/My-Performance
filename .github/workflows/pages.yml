@@ -32,6 +32,7 @@ jobs:
           node --check time-aware-core.js
           node --check time-aware-capacity.js
           node --check late-wake-policy.js
+          node --check funding-strategy-2026.js
           node --check recalc-center-fix.js
           node --check runtime-health.js
           node --check pwa-update.js
@@ -39,6 +40,8 @@ jobs:
           node tests/scheduler2.test.js
           node tests/live-capacity.test.js
           node tests/time-aware-core.test.js
+          node tests/late-wake-policy.test.js
+          node tests/funding-strategy-2026.test.js
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
