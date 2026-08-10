@@ -1,0 +1,24 @@
+/* Scheduler 2.0 + iPhone/PWA polish */
+.recalc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.recalc-option{appearance:none;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:14px;padding:14px;cursor:pointer;min-height:96px}
+.recalc-option.primary{border-color:var(--green)}
+.recalc-option b,.recalc-option span{display:block}.recalc-option span{margin-top:6px;color:var(--muted);line-height:1.35}
+.scheduler-context{margin-top:8px;padding:8px 10px;border-left:2px solid var(--line);color:var(--muted);font-size:.86rem;line-height:1.4}
+.scheduler-slot-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:8px}
+.time-track{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.time-track.active .track-clock{font-variant-numeric:tabular-nums;font-weight:800}.time-track.done{color:var(--green)}
+.scheduler-tracker-dock{position:sticky;top:0;z-index:35}.scheduler-tracker-dock[hidden]{display:none}.tracker-dock-card{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;margin:8px 0}.tracker-dock-card div:first-child span,.tracker-dock-card div:first-child b{display:block}.tracker-dock-card>strong{font-variant-numeric:tabular-nums;font-size:1.1rem}
+.scheduler-anchor-card{padding:8px 0}.scheduler-anchor-card b,.scheduler-anchor-card span{display:block}.scheduler-anchor-card span{font-size:.82rem;color:var(--muted);margin-top:3px}
+.synthetic-mark{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--line);border-radius:10px;color:var(--muted)}
+.late-wake-card{display:flex;justify-content:space-between;align-items:center;gap:14px;border-color:var(--amber)}.late-warnings{display:grid;gap:4px;margin-top:8px}.late-warnings span{font-size:.82rem;color:var(--muted)}
+.goal-health-list{display:grid;gap:9px}.goal-health{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px;border:1px solid var(--line);border-radius:12px}.goal-health>div>*{display:block;margin-bottom:4px}.goal-health>strong{font-size:1.05rem}.goal-health>small{grid-column:1/-1;color:var(--muted)}.goal-health.critical{border-color:var(--red)}.goal-health.attention{border-color:var(--amber)}.goal-health.ok{border-color:var(--green)}.goal-health-list.compact .goal-health{padding:9px}
+.scheduler-week{margin-bottom:18px}.scheduler-week-kpis{margin-bottom:14px}.week-domain-row{display:grid;grid-template-columns:1fr auto;gap:3px 10px;padding:9px 0;border-bottom:1px solid var(--line)}.week-domain-row small{color:var(--muted)}.week-domain-row .progress{grid-column:1/-1}.quota-item{display:grid;grid-template-columns:1fr auto;gap:5px 10px;padding:10px 0;border-bottom:1px solid var(--line)}.quota-item div span,.quota-item div b{display:block}.quota-item div span{color:var(--muted);font-size:.84rem}.quota-item .progress{grid-column:1/-1}
+.cloud-conflict{margin-top:12px}.cloud-conflict p{margin:6px 0}.cloud-conflict .notification-actions{margin-top:10px}
+.scheduler-confirm .callout,.scheduler-diagnosis .callout{margin:12px 0}.danger-lite{border-color:var(--amber)}
+.quick-add-s2 .modal-actions,.scheduler-confirm .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+@supports(padding:max(0px)){
+  .topbar{padding-top:max(10px,env(safe-area-inset-top))}
+  .bottom-nav{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+  .modal-card{max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);overflow:auto}
+}
+@media(display-mode:standalone){body{-webkit-user-select:none}.quest-desc,.scheduler-context,input,textarea{-webkit-user-select:text}.topbar{position:sticky;top:0;z-index:50}}
+@media(max-width:720px){.recalc-grid{grid-template-columns:1fr}.tracker-dock-card{grid-template-columns:1fr auto}.tracker-dock-card>div:last-child{grid-column:1/-1;display:flex;justify-content:flex-end}.late-wake-card{align-items:flex-start;flex-direction:column}.scheduler-slot-actions{align-items:flex-start}.scheduler-week-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.btn,.mini-link,.recalc-option{touch-action:manipulation}}
