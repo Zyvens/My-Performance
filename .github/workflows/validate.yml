@@ -21,6 +21,7 @@ jobs:
           node --check cloud-sync.js
           node --check planner.js
           node --check routine.js
+          node --check runtime-hooks.js
           node --check notifications.js
           node --check sw.js
       - name: Validate quest catalog
