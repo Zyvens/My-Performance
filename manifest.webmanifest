@@ -1,33 +1,23 @@
 {
+  "id": "./",
   "name": "My Performance — Life RPG",
   "short_name": "Performance",
   "description": "RPG pessoal de metas, hábitos, GSA, carreira e estudos.",
+  "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#06100d",
   "theme_color": "#07130f",
+  "categories": ["productivity", "lifestyle"],
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "Missão atual",
-      "short_name": "Missão atual",
-      "description": "Abrir a agenda programática de hoje",
-      "url": "./?view=today",
-      "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]
-    },
-    {
-      "name": "Calendário / Gantt",
-      "short_name": "Gantt",
-      "description": "Abrir a progressão das campanhas",
-      "url": "./?view=timeline",
-      "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]
-    }
+    {"name":"Missão atual","short_name":"Missão atual","description":"Abrir a agenda operacional de hoje","url":"./?view=today","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]},
+    {"name":"Dashboard semanal","short_name":"Dashboard","description":"Abrir métricas reais da semana","url":"./?view=dashboard","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]},
+    {"name":"Calendário / Gantt","short_name":"Gantt","description":"Abrir a progressão das campanhas","url":"./?view=timeline","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]}
   ]
 }
