@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="planner.css">
 <title>My Performance — Life RPG</title>
 </head>
 <body>
@@ -20,17 +21,18 @@
   </header>
   <section id="hud" class="hud"></section>
   <nav class="nav" id="topNav">
-    <button data-view="dashboard" class="active">Dashboard</button><button data-view="today">Hoje</button><button data-view="quests">Quests</button><button data-view="agenda">Agenda</button><button data-view="player">Player</button><button data-view="rewards">Recompensas</button><button data-view="config">Config</button>
+    <button data-view="dashboard" class="active">Dashboard</button><button data-view="today">Hoje</button><button data-view="quests">Quests</button><button data-view="agenda">Agenda</button><button data-view="timeline">Calendário / Gantt</button><button data-view="player">Player</button><button data-view="rewards">Recompensas</button><button data-view="config">Config</button>
   </nav>
   <main id="view"></main>
 </div>
 <nav class="bottom-nav">
-  <button data-view="dashboard" class="active"><b>⌂</b>Início</button><button data-view="today"><b>⚔</b>Hoje</button><button data-view="quests"><b>☷</b>Quests</button><button data-view="agenda"><b>▦</b>Agenda</button><button data-view="player"><b>♜</b>Player</button><button data-view="config"><b>⚙</b>Config</button>
+  <button data-view="dashboard" class="active"><b>⌂</b>Início</button><button data-view="today"><b>◷</b>Hoje</button><button data-view="quests"><b>☷</b>Quests</button><button data-view="agenda"><b>▦</b>Agenda</button><button data-view="timeline"><b>▤</b>Gantt</button><button data-view="player"><b>♜</b>Player</button><button data-view="config"><b>⚙</b>Config</button>
 </nav>
 <div class="toast" id="toast"></div>
 <div id="modal"></div>
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script src="cloud-sync.js"></script>
+<script src="planner.js"></script>
 </body>
 </html>
