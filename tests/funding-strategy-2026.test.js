@@ -1,0 +1,12 @@
+const fs=require('fs'),vm=require('vm');
+const ctx={console};ctx.window=ctx;ctx.state={};ctx.MyPerformanceRoutine={planDay:()=>({slots:[{q:{id:'capacity-gsa-x',title:'GSA · Editais / FAPERJ',capacityGsa:true,category:'Editais'},start:600,end:660}]})};vm.createContext(ctx);
+vm.runInContext(fs.readFileSync('data.js','utf8'),ctx);vm.runInContext(fs.readFileSync('routine-data.js','utf8'),ctx);
+ctx.window.QUEST_SEED=ctx.QUEST_SEED;vm.runInContext(fs.readFileSync('funding-strategy-2026.js','utf8'),ctx);
+const by=id=>ctx.QUEST_SEED.find(q=>q.id===id);
+for(const id of ['gsa-c2','gsa-c3','gsa-c4','gsa-c6','gsa-c8','gsa-c9','gsa-c10','gsa-c11','gsa-c13'])if(!by(id))throw new Error('Missing migrated quest '+id);
+if(/FAPERJ 15\/2026 submetido/.test(by('gsa-c10').title))throw new Error('Old FAPERJ submission thesis survived');
+if(!/GO\/NO-GO/.test(by('gsa-c10').title))throw new Error('INT must be eligibility-gated');
+for(const id of ['gsa-funding-techbrief','gsa-funding-contact-fitec','gsa-funding-contact-eldorado','gsa-funding-contact-cpqd','gsa-funding-embrapii-meetings','gsa-funding-embrapii-compare','gsa-funding-embrapii-pi','gsa-funding-embrapii-contract'])if(!by(id))throw new Error('Missing EMBRAPII milestone '+id);
+if(by('gsa-r-faperj').durationMin!==20)throw new Error('INT monitoring must not remain a fictitious 2h application block');
+const p=ctx.MyPerformanceRoutine.planDay('2026-08-10');if(!/Captação EVA/.test(p.slots[0].q.title))throw new Error('Capacity block still uses old Editais/FAPERJ label');
+console.log('Funding strategy 2026 tests passed');
