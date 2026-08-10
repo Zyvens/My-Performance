@@ -7,7 +7,7 @@
     const btn=document.getElementById('adaptiveRecalc');
     if(!api?.openRecalcCenter||!btn)return false;
     const label='↻ Recalcular / Diagnóstico';
-    if(btn.textContent!==label)btn.textContent=label;
+    if(btn.textContent!==label)btn.textContent='↻ Recalcular / Diagnóstico';
     if(btn.getAttribute('aria-label')!=='Abrir central de recálculo e diagnóstico')btn.setAttribute('aria-label','Abrir central de recálculo e diagnóstico');
     if(btn.dataset.scheduler2Recalc!=='1')btn.dataset.scheduler2Recalc='1';
     if(!btn.__scheduler2Bound){
