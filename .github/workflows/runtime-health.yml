@@ -24,6 +24,8 @@ jobs:
           node --check completion-guard.js
           node --check discard-day.js
           node --check fixed-commitments.js
+          node --check adaptive-fairness.js
+          node --check balanced-capacity.js
           node --check sw.js
           node tests/scheduler2.test.js
           node tests/live-capacity.test.js
@@ -32,6 +34,8 @@ jobs:
           node tests/funding-strategy-2026.test.js
           node tests/discard-day.test.js
           node tests/fixed-commitments.test.js
+          node tests/adaptive-fairness.test.js
+          node tests/balanced-capacity.test.js
       - name: Guard against known runtime regressions
         run: |
           node <<'NODE'
@@ -39,9 +43,9 @@ jobs:
           const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
           if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: recursive MutationObserver');
           const index=fs.readFileSync('index.html','utf8');
-          if(!index.includes('data-build="1.5.14"')||!index.includes('completion-guard.js')||!index.includes('discard-day.js')||!index.includes('fixed-commitments.js'))throw new Error('HTML fixed commitments build marker missing');
+          for(const token of ['data-build="1.5.15"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js'])if(!index.includes(token))throw new Error(`HTML balanced scheduler marker missing: ${token}`);
           const health=fs.readFileSync('runtime-health.js','utf8');
-          if(!health.includes("document.documentElement.dataset.build||'1.5.14'"))throw new Error('Runtime badge must read shell build');
+          if(!health.includes("document.documentElement.dataset.build||'1.5.15'"))throw new Error('Runtime badge must read shell build');
           const completion=fs.readFileSync('completion-guard.js','utf8');
           for(const token of ['markManual','recordCompletion','unlockChecks','[data-toggle][disabled]','dependencyStatus(q).missing'])if(!completion.includes(token))throw new Error(`Manual completion authority missing: ${token}`);
           if(completion.includes("toast('Quest bloqueada por dependência')"))throw new Error('Manual completion must never be blocked by dependencies');
@@ -49,9 +53,13 @@ jobs:
           for(const token of ['Descartar dia','discardedDays','pendingRelevant','deferAdaptive','rescheduledFromDiscard','completedQuestIds'])if(!discard.includes(token))throw new Error(`Discard day behavior missing: ${token}`);
           const fixed=fs.readFileSync('fixed-commitments.js','utf8');
           for(const token of ["title:'Terapia'","weekdays:[2]","timeStart:'08:00'","timeEnd:'08:30'","commuteOutMin:60","commuteReturnMin:60"])if(!fixed.includes(token))throw new Error(`Tuesday therapy commitment missing: ${token}`);
+          const fairness=fs.readFileSync('adaptive-fairness.js','utf8');
+          for(const token of ['parentDays','maxAdaptiveMinPerDay','fairnessEmergency','my-performance-plan-recalculated'])if(!fairness.includes(token))throw new Error(`Adaptive fairness missing: ${token}`);
+          const balance=fs.readFileSync('balanced-capacity.js','utf8');
+          for(const token of ['STUDY_MIN=90','GSA_SOFT_TARGET=480','capacityStudyProtected','meta flexível'])if(!balance.includes(token))throw new Error(`Balanced capacity missing: ${token}`);
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!sw.includes("my-performance-v1.5.14")||!sw.includes('completion-guard.js')||!sw.includes('discard-day.js')||!sw.includes('fixed-commitments.js'))throw new Error('PWA fixed commitments build incomplete');
+          for(const token of ['my-performance-v1.5.15','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js'])if(!sw.includes(token))throw new Error(`PWA balanced scheduler build incomplete: ${token}`);
           const version=JSON.parse(fs.readFileSync('version.json','utf8'));
-          if(version.version!=='1.5.14')throw new Error('Server version beacon mismatch');
-          console.log('Runtime, PWA, completion, discard-day and fixed commitments guards passed');
+          if(version.version!=='1.5.15')throw new Error('Server version beacon mismatch');
+          console.log('Runtime, PWA, completion, discard-day, fixed commitments and balanced scheduling guards passed');
           NODE
