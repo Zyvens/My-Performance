@@ -1,0 +1,41 @@
+name: Runtime Health Regression
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and scheduler tests
+        run: |
+          node --check recalc-center-fix.js
+          node --check runtime-health.js
+          node --check pwa-update.js
+          node --check time-aware-capacity.js
+          node --check sw.js
+          node tests/scheduler2.test.js
+          node tests/live-capacity.test.js
+          node tests/time-aware-core.test.js
+      - name: Guard against known freeze regression
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
+          if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: MutationObserver can recursively mutate the same button');
+          if(!recalc.includes("if(btn.textContent!==label)btn.textContent='↻ Recalcular / Diagnóstico'"))throw new Error('Recalc binding must be idempotent');
+          if(!recalc.includes('requestAnimationFrame'))throw new Error('Recalc mutation binding must be coalesced');
+          const health=fs.readFileSync('runtime-health.js','utf8');
+          if(!health.includes("setText(card.querySelector('b'),'Dentro da janela')"))throw new Error('False overload cleanup missing');
+          const sw=fs.readFileSync('sw.js','utf8');
+          if(!sw.includes("my-performance-v1.5.7"))throw new Error('PWA cache version not bumped');
+          const index=fs.readFileSync('index.html','utf8');
+          if(!index.includes('runtime-health.js'))throw new Error('Runtime health guard not loaded');
+          console.log('Runtime health regression guards passed');
+          NODE

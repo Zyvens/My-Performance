@@ -1,0 +1,49 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validate critical JavaScript
+        run: |
+          node --check app.js
+          node --check scheduler-core.js
+          node --check scheduler-2.js
+          node --check live-capacity.js
+          node --check time-aware-core.js
+          node --check time-aware-capacity.js
+          node --check recalc-center-fix.js
+          node --check runtime-health.js
+          node --check pwa-update.js
+          node --check sw.js
+          node tests/scheduler2.test.js
+          node tests/live-capacity.test.js
+          node tests/time-aware-core.test.js
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
