@@ -13,5 +13,21 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Missão atual",
+      "short_name": "Missão atual",
+      "description": "Abrir a agenda programática de hoje",
+      "url": "./?view=today",
+      "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]
+    },
+    {
+      "name": "Calendário / Gantt",
+      "short_name": "Gantt",
+      "description": "Abrir a progressão das campanhas",
+      "url": "./?view=timeline",
+      "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]
+    }
   ]
 }
