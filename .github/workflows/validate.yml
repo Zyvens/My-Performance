@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine]
+    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional]
 
 jobs:
   validate:
@@ -21,6 +21,7 @@ jobs:
           node --check cloud-sync.js
           node --check planner.js
           node --check routine.js
+          node --check muay-optional.js
           node --check runtime-hooks.js
           node --check notifications.js
           node --check sw.js
