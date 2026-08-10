@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection, agent/capacity-budget-bni, agent/scheduler-2-complete, agent/mobile-nav-today-fix, agent/fill-gaps-sleep-anchor-fix]
+    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection, agent/capacity-budget-bni, agent/scheduler-2-complete, agent/mobile-nav-today-fix, agent/fill-gaps-sleep-anchor-fix, agent/fix-neon-sdk-import]
 
 jobs:
   validate:
@@ -59,8 +59,12 @@ jobs:
           const nav=fs.readFileSync('mobile-nav-fix.js','utf8');if(!nav.includes("if(view==='today')state.plannerDate=today()"))throw new Error('Today tab must reset plannerDate to the real current date');if(!nav.includes('syncActive(view)'))throw new Error('Navigation active-state guard missing');
           const live=fs.readFileSync('live-capacity.js','utf8');for(const token of ["disabled:true,boundaryOnly:true",'candidatePool','syntheticForGap','espaço liberado por conclusão antecipada','window.MyPerformanceLiveCapacity'])if(!live.includes(token))throw new Error(`Live capacity rule missing: ${token}`);
           if(!live.includes("x?.q?.id==='personal-sleep'"))throw new Error('Sleep must be filtered as boundary, not a competing quest');
-          const sync=fs.readFileSync('cloud-sync.js','utf8');if(!sync.includes('my-performance-sync-conflict')||!sync.includes('resolveConflict'))throw new Error('Conflict-safe sync missing');
+          const sync=fs.readFileSync('cloud-sync.js','utf8');
+          if(!sync.includes('my-performance-sync-conflict')||!sync.includes('resolveConflict'))throw new Error('Conflict-safe sync missing');
+          if(!sync.includes('cdn.jsdelivr.net/npm/@neondatabase/neon-js@0.6.3-beta/+esm')||!sync.includes('esm.sh/@neondatabase/neon-js@0.6.3-beta?bundle'))throw new Error('Neon SDK CDN fallback chain missing');
+          if(!sync.includes('loadSdk')||!sync.includes('sdkErrors'))throw new Error('Neon SDK diagnostic loader missing');
           const index=fs.readFileSync('index.html','utf8');for(const asset of ['scheduler-core.js','scheduler-2.js','scheduler-2.css','mobile-nav-fix.js','live-capacity.js'])if(!index.includes(asset))throw new Error(`Missing runtime asset in index: ${asset}`);
           const sw=fs.readFileSync('sw.js','utf8');for(const asset of ['scheduler-core.js','scheduler-2.js','scheduler-2.css','mobile-nav-fix.js','live-capacity.js'])if(!sw.includes(asset))throw new Error(`Missing runtime asset in service worker: ${asset}`);
-          console.log(`Validated ${qs.length} quests, Scheduler 2.0, mobile navigation and live capacity contracts`);
+          if(!sw.includes("if(url.origin!==self.location.origin)return"))throw new Error('Service worker must bypass cross-origin SDK modules');
+          console.log(`Validated ${qs.length} quests, Scheduler 2.0, mobile navigation, live capacity and Neon sync contracts`);
           NODE

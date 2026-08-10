@@ -2,7 +2,10 @@
 
 const NEON_AUTH_URL='https://ep-fancy-wave-a6thlzk9.neonauth.us-west-2.aws.neon.tech/neondb/auth';
 const NEON_DATA_API_URL='https://ep-fancy-wave-a6thlzk9.apirest.us-west-2.aws.neon.tech/neondb/rest/v1';
-const NEON_SDK_URL='https://esm.sh/@neondatabase/neon-js@0.6.3-beta?bundle';
+const NEON_SDK_URLS=[
+  'https://cdn.jsdelivr.net/npm/@neondatabase/neon-js@0.6.3-beta/+esm',
+  'https://esm.sh/@neondatabase/neon-js@0.6.3-beta?bundle'
+];
 const N_EMAIL='my_performance_neon_email';
 const N_ENABLED='my_performance_neon_enabled';
 const N_LAST_SYNC='my_performance_neon_last_sync';
@@ -23,13 +26,40 @@ const neonSync={
   lastSnapshot:localStorage.getItem(N_STATE_KEY)||'',
   baseSnapshot:localStorage.getItem(N_BASE_SNAPSHOT)||'',
   clientPromise:null,
+  sdkSource:'',
+  sdkErrors:[],
   conflict:null
 };
 
 function status(msg,kind=''){
   const e=document.getElementById('cloudStatus');if(!e)return;e.textContent=msg;e.style.color=kind==='ok'?'var(--green)':kind==='error'?'var(--red)':'var(--muted2)'
 }
-async function getClient(){if(!neonSync.clientPromise)neonSync.clientPromise=import(NEON_SDK_URL).then(({createClient})=>createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}}));return neonSync.clientPromise}
+function errText(e){return String(e?.message||e||'erro desconhecido')}
+function isModuleImportError(e){return /importing a module script failed|failed to fetch dynamically imported module|module script|dynamic import|mime type|load module/i.test(errText(e))}
+async function loadSdk(){
+  const failures=[];
+  for(const url of NEON_SDK_URLS){
+    try{
+      const mod=await import(url);
+      if(typeof mod?.createClient!=='function')throw new Error('createClient não encontrado no módulo Neon JS');
+      neonSync.sdkSource=url;neonSync.sdkErrors=failures;return mod
+    }catch(e){failures.push({url,error:errText(e)})}
+  }
+  neonSync.sdkErrors=failures;
+  const detail=failures.map((x,i)=>`${i+1}. ${x.error}`).join(' | ');
+  throw new Error(`Não foi possível carregar o Neon JS no navegador. ${detail}`)
+}
+async function getClient(){
+  if(!neonSync.clientPromise){
+    neonSync.clientPromise=loadSdk().then(({createClient})=>createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}})).catch(e=>{neonSync.clientPromise=null;throw e})
+  }
+  return neonSync.clientPromise
+}
+function cloudError(prefix,e){
+  const text=errText(e);
+  if(isModuleImportError(e)||/Não foi possível carregar o Neon JS/i.test(text))return `${prefix} · SDK Neon não carregou no iPhone/PWA. Feche e abra o app para atualizar; se persistir, tente novamente com internet ativa.`;
+  return `${prefix} · ${text}`
+}
 function unwrapAuth(result){if(result?.error)throw new Error(result.error.message||result.error.statusText||'Falha de autenticação.');return result?.data??result}
 function unpack(x){return Array.isArray(x)?x[0]:x}
 function markLocal(){localStorage.setItem(N_LOCAL_UPDATED,new Date().toISOString())}
@@ -71,7 +101,7 @@ async function push({force=false,skipRemoteCheck=false}={}){
       }
     }
     const out=unpack(await rpc('my_performance_push',{p_state:JSON.parse(raw)})),stamp=out?.updated_at||out?.updatedAt||new Date().toISOString();setBase(raw,stamp);localStorage.setItem(N_LOCAL_UPDATED,stamp);clearConflict();status(`Neon sincronizado · ${new Date(stamp).toLocaleString('pt-BR')}`,'ok');return true
-  }catch(e){status(`Cloud indisponível · ${e.message}`,'error');return false}finally{neonSync.syncing=false}
+  }catch(e){status(cloudError('Cloud indisponível',e),'error');return false}finally{neonSync.syncing=false}
 }
 
 async function pull({force=false}={}){
@@ -90,12 +120,25 @@ async function pull({force=false}={}){
     if(c.remoteChanged&&!c.localChanged){applyRemoteObj(remoteObj,remoteUpdated);status('Alterações da nuvem aplicadas.','ok');return true}
     if(c.localChanged&&!c.remoteChanged){neonSync.syncing=false;return push({force:true,skipRemoteCheck:true})}
     return exposeConflict(localRaw,remoteRaw,remoteUpdated)
-  }catch(e){status(`Cloud indisponível · ${e.message}`,'error');return false}finally{neonSync.syncing=false}
+  }catch(e){status(cloudError('Cloud indisponível',e),'error');return false}finally{neonSync.syncing=false}
 }
 
 function schedulePush(){if(!neonSync.enabled||neonSync.applyingRemote||neonSync.conflict)return;clearTimeout(neonSync.timer);neonSync.timer=setTimeout(()=>push(),900)}
-async function signIn(email,password){if(!email||!password){status('Informe e-mail e senha.','error');return false}status('Entrando no Neon Auth…');try{const client=await getClient();unwrapAuth(await client.auth.signIn.email({email,password}));neonSync.email=email;neonSync.enabled=true;localStorage.setItem(N_EMAIL,email);localStorage.setItem(N_ENABLED,'1');status('Login realizado. Comparando saves…','ok');await pull();bindUI();return true}catch(e){status(`Login falhou · ${e.message}`,'error');return false}}
-async function signUp(email,password){if(!email||!password){status('Informe e-mail e senha.','error');return false}if(password.length<8){status('Use uma senha com pelo menos 8 caracteres.','error');return false}status('Criando sua conta Neon Auth…');try{const client=await getClient();unwrapAuth(await client.auth.signUp.email({email,password,name:'Vitor'}));neonSync.email=email;neonSync.enabled=true;localStorage.setItem(N_EMAIL,email);localStorage.setItem(N_ENABLED,'1');const logged=await session();if(!logged)unwrapAuth(await client.auth.signIn.email({email,password}));status('Conta criada. Inicializando save…','ok');await pull();bindUI();return true}catch(e){status(`Cadastro falhou · ${e.message}`,'error');return false}}
+async function signIn(email,password){
+  if(!email||!password){status('Informe e-mail e senha.','error');return false}
+  status('Carregando Neon Auth…');
+  try{
+    const client=await getClient();status('Entrando no Neon Auth…');unwrapAuth(await client.auth.signIn.email({email,password}));neonSync.email=email;neonSync.enabled=true;localStorage.setItem(N_EMAIL,email);localStorage.setItem(N_ENABLED,'1');status('Login realizado. Comparando saves…','ok');await pull();bindUI();return true
+  }catch(e){status(cloudError('Login falhou',e),'error');return false}
+}
+async function signUp(email,password){
+  if(!email||!password){status('Informe e-mail e senha.','error');return false}
+  if(password.length<8){status('Use uma senha com pelo menos 8 caracteres.','error');return false}
+  status('Carregando Neon Auth…');
+  try{
+    const client=await getClient();status('Criando sua conta Neon Auth…');unwrapAuth(await client.auth.signUp.email({email,password,name:'Vitor'}));neonSync.email=email;neonSync.enabled=true;localStorage.setItem(N_EMAIL,email);localStorage.setItem(N_ENABLED,'1');const logged=await session();if(!logged)unwrapAuth(await client.auth.signIn.email({email,password}));status('Conta criada. Inicializando save na nuvem…','ok');await pull();bindUI();return true
+  }catch(e){status(cloudError('Cadastro falhou',e),'error');return false}
+}
 async function signOut(){try{const client=await getClient();await client.auth.signOut()}catch{}neonSync.enabled=false;localStorage.setItem(N_ENABLED,'0');clearConflict();status('Sessão encerrada. Seus dados locais continuam neste dispositivo.');bindUI()}
 
 async function resolveConflict(strategy){
@@ -121,7 +164,7 @@ async function bindUI(){
   ep.value=NEON_DATA_API_URL;ep.readOnly=true;const epLabel=ep.closest('.field')?.querySelector('label');if(epLabel)epLabel.textContent='Neon Data API (configurada)';const emailLabel=email.closest('.field')?.querySelector('label');if(emailLabel)emailLabel.textContent='E-mail da conta';const pwLabel=pw.closest('.field')?.querySelector('label');if(pwLabel)pwLabel.textContent='Senha Neon Auth';email.type='email';email.placeholder='seu@email.com';email.value=neonSync.email;pw.value='';pw.placeholder='não é salva neste navegador';en.checked=neonSync.enabled;
   const login=document.getElementById('cloudSave');login.textContent='Entrar e sincronizar';const actions=login.parentElement;let signup=document.getElementById('cloudSignup');if(!signup){signup=document.createElement('button');signup.id='cloudSignup';signup.className='btn';signup.textContent='Criar conta';actions.insertBefore(signup,document.getElementById('cloudPull'))}let logout=document.getElementById('cloudLogout');if(!logout){logout=document.createElement('button');logout.id='cloudLogout';logout.className='btn';logout.textContent='Sair';actions.appendChild(logout)}
   const pullBtn=document.getElementById('cloudPull'),pushBtn=document.getElementById('cloudPush');if(pullBtn)pullBtn.textContent='Usar nuvem…';if(pushBtn)pushBtn.textContent='Usar este aparelho…';
-  const auth=await session();if(auth){const user=auth.user||auth.session?.user,currentEmail=user?.email||neonSync.email;if(currentEmail){neonSync.email=currentEmail;email.value=currentEmail;localStorage.setItem(N_EMAIL,currentEmail)}status(neonSync.conflict?'Conectado, mas há conflito aguardando resolução.':`Conectado${currentEmail?' como '+currentEmail:''}. Cloud Sync ${neonSync.enabled?'ativa':'pausada'}.`,neonSync.conflict?'error':'ok')}else status('Sem login. Crie uma conta ou entre para ativar o save em nuvem.');
+  const auth=await session();if(auth){const user=auth.user||auth.session?.user,currentEmail=user?.email||neonSync.email;if(currentEmail){neonSync.email=currentEmail;email.value=currentEmail;localStorage.setItem(N_EMAIL,currentEmail)}status(neonSync.conflict?'Conectado, mas há conflito aguardando resolução.':`Conectado${currentEmail?' como '+currentEmail:''}. Cloud Sync ${neonSync.enabled?'ativa':'pausada'}.${neonSync.sdkSource?' SDK carregado.':''}`,neonSync.conflict?'error':'ok')}else if(neonSync.sdkErrors.length===NEON_SDK_URLS.length)status('SDK Neon ainda não carregou neste navegador. Toque em Entrar e sincronizar para tentar novamente.','error');else status('Sem login. Crie uma conta ou entre para ativar o save em nuvem.');
   login.onclick=()=>{neonSync.enabled=true;en.checked=true;signIn(email.value.trim(),pw.value)};signup.onclick=()=>{neonSync.enabled=true;en.checked=true;signUp(email.value.trim(),pw.value)};logout.onclick=signOut;en.onchange=()=>{neonSync.enabled=en.checked;localStorage.setItem(N_ENABLED,en.checked?'1':'0');status(en.checked?'Cloud Sync ativada. Faça login se necessário.':'Cloud Sync pausada.');if(en.checked)pull()};
   if(pullBtn)pullBtn.onclick=()=>{if(confirm('Aplicar explicitamente a versão da nuvem? Se houver divergência, ela substituirá a versão local.'))pull({force:true})};
   if(pushBtn)pushBtn.onclick=()=>{if(confirm('Enviar explicitamente a versão deste aparelho? Se houver divergência, ela substituirá a versão da nuvem.')){markLocal();push({force:true,skipRemoteCheck:true})}};
@@ -130,5 +173,5 @@ async function bindUI(){
 
 window.addEventListener('my-performance-state-saved',()=>{if(!neonSync.applyingRemote){markLocal();schedulePush()}});
 window.addEventListener('my-performance-view-rendered',e=>{if(e.detail?.view==='config')bindUI()});
-window.MyPerformanceCloud={bindUI,pull,push,signIn,signUp,signOut,resolveConflict,status:()=>({email:neonSync.email,enabled:neonSync.enabled,lastSync:localStorage.getItem(N_LAST_SYNC),conflict:!!neonSync.conflict})};
+window.MyPerformanceCloud={bindUI,pull,push,signIn,signUp,signOut,resolveConflict,status:()=>({email:neonSync.email,enabled:neonSync.enabled,lastSync:localStorage.getItem(N_LAST_SYNC),conflict:!!neonSync.conflict,sdkSource:neonSync.sdkSource,sdkErrors:neonSync.sdkErrors.slice()})};
 if(neonSync.enabled)session().then(s=>{if(s)pull()});
