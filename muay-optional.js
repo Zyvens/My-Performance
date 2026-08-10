@@ -22,7 +22,7 @@
     mergeOverride('routine-shower-post-gym',{weekdays:gymDays});
 
     /* Full GSA morning is the default. Only selected Muay days split that block. */
-    mergeOverride('routine-gsa-focus-am',{weekdays:[1,2,3,4,5].filter(d=>!days.includes(d)),disabled:false});
+    mergeOverride('routine-gsa-focus-am',{weekdays:[1,2,3,4,5].filter(d=>!days.includes(d))});
     mergeOverride('routine-gsa-pre-muay',{weekdays:days,timeStart:'09:10',timeEnd:'09:50',durationMin:40,disabled:!enabled,description:'Sprint GSA antes do deslocamento. Só aparece nos dias em que o Muay Thai estiver ativado.'});
     mergeOverride('routine-gsa-post-muay',{weekdays:days,timeStart:'11:10',timeEnd:'12:20',durationMin:70,disabled:!enabled,description:'Retomada GSA após o Muay Thai. Só aparece nos dias em que o Muay Thai estiver ativado.'});
 
@@ -36,7 +36,7 @@
 
   renderConfig=function(){
     BASE_RENDER_CONFIG();ensure();applyMuay();const host=document.getElementById('view');if(!host)return;
-    const old=document.getElementById('routineMuayFriday');if(old)old.closest('.setting-toggle')?.remove();
+    const old=document.getElementById('routineMuayFriday');if(old){old.checked=false;const label=old.closest('.setting-toggle');if(label)label.style.display='none'}
     const days=activeDays(),labels={1:'Segunda',3:'Quarta',5:'Sexta'};
     host.insertAdjacentHTML('beforeend',`<div class="section-title"><div><span class="eyebrow">MUAY THAI OPCIONAL</span><h2>Treino extra, não substituição</h2><p class="muted">A academia de 1h30 continua cedo. Ao ativar Muay Thai, o dia ganha mais 1h de aula + 10 min de ida + 10 min de volta.</p></div></div><div class="card"><div class="form-row"><div><h3>Dias possíveis às 10:00</h3><div class="weekdays">${ALLOWED_DAYS.map(d=>`<button type="button" class="${days.includes(d)?'on':''}" data-muay-day="${d}">${labels[d].slice(0,3)}</button>`).join('')}</div><p class="subtle" style="margin-top:8px">Desligado por padrão. Sem dia selecionado, a rotina permanece apenas com a academia de 1h30 nas primeiras horas da manhã.</p></div><div class="callout"><b>Carga em dia com Muay Thai</b><br>Academia: 1h30 · Muay Thai: 1h · deslocamento: 20 min → <b>2h50 no total</b>.</div></div><div class="note" style="margin-top:12px">${days.length?`Ativo em: ${days.map(d=>labels[d]).join(', ')}. Nesses dias, a academia continua cedo e o bloco GSA da manhã é dividido antes/depois da aula.`:'Muay Thai desativado. O planejador preserva a manhã para academia + campanha prioritária.'}</div></div>`);
     document.querySelectorAll('[data-muay-day]').forEach(b=>b.onclick=()=>{const d=Number(b.dataset.muayDay),a=activeDays().slice(),i=a.indexOf(d);if(i>=0)a.splice(i,1);else a.push(d);state.routineSettings.muayDays=a.sort((x,y)=>x-y);applyMuay();saveState();render();toast(a.includes(d)?`${labels[d]} de Muay Thai ativada`:`${labels[d]} de Muay Thai desativada`)})
