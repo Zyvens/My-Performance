@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg]
+    branches: [agent/life-rpg, agent/notifications-routine]
 
 jobs:
   validate:
@@ -16,9 +16,13 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check data.js
+          node --check routine-data.js
           node --check app.js
           node --check cloud-sync.js
           node --check planner.js
+          node --check routine.js
+          node --check runtime-hooks.js
+          node --check notifications.js
           node --check sw.js
       - name: Validate quest catalog
         run: |
@@ -26,8 +30,9 @@ jobs:
           const fs=require('fs'),vm=require('vm');
           const ctx={console};vm.createContext(ctx);
           vm.runInContext(fs.readFileSync('data.js','utf8'),ctx);
+          vm.runInContext(fs.readFileSync('routine-data.js','utf8'),ctx);
           const qs=ctx.QUEST_SEED;
-          if(!Array.isArray(qs)||qs.length<100)throw new Error(`Expected >=100 quests, got ${qs?.length}`);
+          if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 quests after routine layer, got ${qs?.length}`);
           const ids=new Set();
           for(const q of qs){
             if(!q.id||!q.title)throw new Error('Quest without id/title');
@@ -38,5 +43,7 @@ jobs:
           for(const q of qs)for(const d of q.dependencies||[])if(!ids.has(d))broken.push(`${q.id} -> ${d}`);
           if(broken.length)throw new Error(`Broken dependencies: ${broken.join(', ')}`);
           const counts=qs.reduce((o,q)=>(o[q.domain]=(o[q.domain]||0)+1,o),{});
+          const required=['routine-water-am','routine-muay','routine-gsa-focus-pm','routine-hygiene-night'];
+          for(const id of required)if(!ids.has(id))throw new Error(`Missing routine quest: ${id}`);
           console.log(`Validated ${qs.length} quests`,counts);
           NODE
