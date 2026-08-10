@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection, agent/capacity-budget-bni]
+    branches: [main, agent/scheduler-v2]
 
 jobs:
   validate:
@@ -15,22 +15,12 @@ jobs:
           node-version: '22'
       - name: Check JavaScript syntax
         run: |
-          node --check data.js
-          node --check routine-data.js
-          node --check app.js
-          node --check cloud-sync.js
-          node --check planner.js
-          node --check routine.js
-          node --check muay-optional.js
-          node --check adaptive-engine.js
-          node --check runtime-hooks.js
-          node --check notifications.js
-          node --check narrator.js
-          node --check day-controls.js
-          node --check weekend-protection.js
-          node --check capacity-budget.js
-          node --check sw.js
-      - name: Validate quest catalog
+          for f in data.js routine-data.js app.js cloud-sync.js planner.js routine.js adaptive-engine.js scheduler-core.js scheduler-v2-state.js scheduler-v2-engine.js scheduler-v2-ui.js runtime-hooks.js notifications.js narrator.js narrator-scheduler.js pwa-enhancements.js sw.js; do
+            node --check "$f"
+          done
+      - name: Scheduler 2.0 behavior tests
+        run: node test/scheduler-v2.test.js
+      - name: Validate application contracts
         run: |
           node <<'NODE'
           const fs=require('fs'),vm=require('vm');
@@ -38,31 +28,17 @@ jobs:
           vm.runInContext(fs.readFileSync('data.js','utf8'),ctx);
           vm.runInContext(fs.readFileSync('routine-data.js','utf8'),ctx);
           const qs=ctx.QUEST_SEED;
-          if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 quests after routine layer, got ${qs?.length}`);
-          const ids=new Set();
-          for(const q of qs){
-            if(!q.id||!q.title)throw new Error('Quest without id/title');
-            if(ids.has(q.id))throw new Error(`Duplicate quest id: ${q.id}`);
-            ids.add(q.id);
-          }
-          const broken=[];
-          for(const q of qs)for(const d of q.dependencies||[])if(!ids.has(d))broken.push(`${q.id} -> ${d}`);
-          if(broken.length)throw new Error(`Broken dependencies: ${broken.join(', ')}`);
-          const counts=qs.reduce((o,q)=>(o[q.domain]=(o[q.domain]||0)+1,o),{});
-          const required=['routine-water-am','routine-muay','routine-gsa-focus-pm','routine-hygiene-night'];
-          for(const id of required)if(!ids.has(id))throw new Error(`Missing routine quest: ${id}`);
-          if(!fs.readFileSync('adaptive-engine.js','utf8').includes("SYSTEM_START='2026-08-10'"))throw new Error('Adaptive engine must start on 2026-08-10');
-          if(!fs.readFileSync('narrator.js','utf8').includes('speechSynthesis'))throw new Error('Narrator speech engine missing');
-          const day=fs.readFileSync('day-controls.js','utf8');
-          if(!day.includes("GSA:{title:'GSA — avanço mínimo diário'"))throw new Error('Daily GSA minimum missing');
-          if(!day.includes("Estudos:{title:'Estudos — sessão mínima diária'"))throw new Error('Daily study minimum missing');
-          if(!day.includes('EXTRA_MIN=120')||!day.includes('MIN_SLEEP_HOURS=6'))throw new Error('Emergency day rules missing');
-          const week=fs.readFileSync('weekend-protection.js','utf8');
-          if(!week.includes("Sexta encerra às 18:00"))throw new Error('Friday cutoff missing');
-          if(!week.includes("Sábado encerra às 12:00"))throw new Error('Saturday cutoff missing');
-          if(!week.includes('Domingo pessoal: trabalho e estudo bloqueados'))throw new Error('Sunday personal-only protection missing');
-          const cap=fs.readFileSync('capacity-budget.js','utf8');
-          for(const token of ['GSA_TARGET=480','WORKOUT_TARGET=5',"gsa-bni-weekly","gsa-bni-organization","gsa-main-hacktown-2026","gsa-main-eva-launch","gsa-main-editais","commuteOutMin","commuteReturnMin"])if(!cap.includes(token))throw new Error(`Capacity rule missing: ${token}`);
-          if(!cap.includes("p.wake=5*60")||!cap.includes("p.end=21*60"))throw new Error('Wednesday BNI wake/sleep window missing');
-          console.log(`Validated ${qs.length} quests`,counts);
+          if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 base quests, got ${qs?.length}`);
+          const ids=new Set();for(const q of qs){if(!q.id||!q.title)throw new Error('Quest without id/title');if(ids.has(q.id))throw new Error(`Duplicate quest id: ${q.id}`);ids.add(q.id)}
+          const broken=[];for(const q of qs)for(const d of q.dependencies||[])if(!ids.has(d))broken.push(`${q.id} -> ${d}`);if(broken.length)throw new Error(`Broken dependencies: ${broken.join(', ')}`);
+          const index=fs.readFileSync('index.html','utf8');
+          for(const token of ['scheduler-core.js','scheduler-v2-state.js','scheduler-v2-engine.js','scheduler-v2-ui.js','narrator-scheduler.js','pwa-enhancements.js'])if(!index.includes(token))throw new Error(`Missing runtime: ${token}`);
+          for(const legacy of ['day-controls.js','weekend-protection.js','capacity-budget.js','muay-optional.js'])if(index.includes(`<script src="${legacy}"></script>`))throw new Error(`Legacy planning layer still active: ${legacy}`);
+          if(index.indexOf('scheduler-v2-engine.js')>index.indexOf('notifications.js'))throw new Error('Scheduler must load before notifications');
+          const sv=[fs.readFileSync('scheduler-v2-state.js','utf8'),fs.readFileSync('scheduler-v2-engine.js','utf8'),fs.readFileSync('scheduler-v2-ui.js','utf8')].join('\n');
+          for(const token of ['GSA_TARGET=480','BNI_WEEKLY=120','WORKOUT_WEEKLY=5','startTracking','pauseTracking','completeTracking','Excluir deste dia','Missão Especial · Revisão do dia','Quick Add','gsa-main-hacktown-2026','gsa-main-eva-launch','gsa-main-editais','sleepEmergency','weeklyMetrics'])if(!sv.includes(token))throw new Error(`Scheduler feature missing: ${token}`);
+          const sync=fs.readFileSync('cloud-sync.js','utf8');for(const token of ['revision','CONFLITO ENTRE DISPOSITIVOS','resolveMerge','DEVICE_ID'])if(!sync.includes(token))throw new Error(`Sync conflict feature missing: ${token}`);
+          const manifest=JSON.parse(fs.readFileSync('manifest.webmanifest','utf8'));if(!manifest.icons.some(x=>x.sizes==='192x192')||!manifest.icons.some(x=>x.sizes==='512x512'))throw new Error('PNG PWA icons missing');
+          const sw=fs.readFileSync('sw.js','utf8');if(!sw.includes("my-performance-v2.0.0")||!sw.includes('SKIP_WAITING'))throw new Error('PWA update flow missing');
+          console.log(`Validated ${qs.length} base quests and Scheduler 2.0 contracts`);
           NODE
