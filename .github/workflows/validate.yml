@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection, agent/capacity-budget-bni, agent/scheduler-2-complete]
+    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection, agent/capacity-budget-bni, agent/scheduler-2-complete, agent/mobile-nav-today-fix]
 
 jobs:
   validate:
@@ -31,6 +31,7 @@ jobs:
           node --check weekend-protection.js
           node --check capacity-budget.js
           node --check scheduler-2.js
+          node --check mobile-nav-fix.js
           node --check sw.js
       - name: Scheduler 2.0 unit tests
         run: node tests/scheduler2.test.js
@@ -52,8 +53,9 @@ jobs:
           const cap=fs.readFileSync('capacity-budget.js','utf8');for(const token of ['GSA_TARGET=480','WORKOUT_TARGET=5','gsa-bni-weekly','gsa-bni-organization','gsa-main-hacktown-2026','gsa-main-eva-launch','gsa-main-editais','commuteOutMin','commuteReturnMin'])if(!cap.includes(token))throw new Error(`Capacity rule missing: ${token}`);if(!cap.includes('p.wake=5*60')||!cap.includes('p.end=21*60'))throw new Error('Wednesday BNI wake/sleep window missing');
           const muay=fs.readFileSync('muay-optional.js','utf8');if(!muay.includes("const ALLOWED_DAYS=[1,5]")||!muay.includes("BNI fixo 06:00–11:00"))throw new Error('Muay/BNI collision guard missing');
           const s2=fs.readFileSync('scheduler-2.js','utf8');for(const token of ['setWakeNow','recalcWeek','objectiveDiagnosis','startTracking','weeklyQuota','openQuickAdd'])if(!s2.includes(token))throw new Error(`Scheduler 2.0 contract missing: ${token}`);
+          const nav=fs.readFileSync('mobile-nav-fix.js','utf8');if(!nav.includes("if(view==='today')state.plannerDate=today()"))throw new Error('Today tab must reset plannerDate to the real current date');if(!nav.includes('syncActive(view)'))throw new Error('Navigation active-state guard missing');
           const sync=fs.readFileSync('cloud-sync.js','utf8');if(!sync.includes('my-performance-sync-conflict')||!sync.includes('resolveConflict'))throw new Error('Conflict-safe sync missing');
-          const index=fs.readFileSync('index.html','utf8');for(const asset of ['scheduler-core.js','scheduler-2.js','scheduler-2.css'])if(!index.includes(asset))throw new Error(`Missing Scheduler asset in index: ${asset}`);
-          const sw=fs.readFileSync('sw.js','utf8');for(const asset of ['scheduler-core.js','scheduler-2.js','scheduler-2.css'])if(!sw.includes(asset))throw new Error(`Missing Scheduler asset in service worker: ${asset}`);
-          console.log(`Validated ${qs.length} quests and Scheduler 2.0 contracts`);
+          const index=fs.readFileSync('index.html','utf8');for(const asset of ['scheduler-core.js','scheduler-2.js','scheduler-2.css','mobile-nav-fix.js'])if(!index.includes(asset))throw new Error(`Missing runtime asset in index: ${asset}`);
+          const sw=fs.readFileSync('sw.js','utf8');for(const asset of ['scheduler-core.js','scheduler-2.js','scheduler-2.css','mobile-nav-fix.js'])if(!sw.includes(asset))throw new Error(`Missing runtime asset in service worker: ${asset}`);
+          console.log(`Validated ${qs.length} quests, Scheduler 2.0 and mobile navigation contracts`);
           NODE
