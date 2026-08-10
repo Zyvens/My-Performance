@@ -1,33 +1,23 @@
 {
   "name": "My Performance — Life RPG",
   "short_name": "Performance",
-  "description": "RPG pessoal de metas, hábitos, GSA, carreira e estudos.",
-  "start_url": "./",
+  "description": "Sistema operacional pessoal gamificado para GSA, estudos, rotina, treino e metas.",
+  "id": "./",
+  "start_url": "./?view=today",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
   "background_color": "#06100d",
   "theme_color": "#07130f",
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"},
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}
   ],
   "shortcuts": [
-    {
-      "name": "Missão atual",
-      "short_name": "Missão atual",
-      "description": "Abrir a agenda programática de hoje",
-      "url": "./?view=today",
-      "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]
-    },
-    {
-      "name": "Calendário / Gantt",
-      "short_name": "Gantt",
-      "description": "Abrir a progressão das campanhas",
-      "url": "./?view=timeline",
-      "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml"}]
-    }
+    {"name":"Missão atual","short_name":"Hoje","description":"Abrir o Scheduler 2.0 de hoje","url":"./?view=today","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]},
+    {"name":"Calendário / Gantt","short_name":"Gantt","description":"Abrir progressão das campanhas","url":"./?view=timeline","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]}
   ]
 }
