@@ -4,24 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07130f">
-<meta name="description" content="My Performance — RPG pessoal de metas, hábitos, carreira, estudos e GSA.">
+<meta name="description" content="My Performance — sistema operacional pessoal gamificado para GSA, estudos, rotina e metas.">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Performance">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="planner.css">
 <link rel="stylesheet" href="routine.css">
 <link rel="stylesheet" href="adaptive.css">
 <link rel="stylesheet" href="narrator.css">
-<link rel="stylesheet" href="day-controls.css">
-<link rel="stylesheet" href="capacity-budget.css">
+<link rel="stylesheet" href="scheduler-v2.css">
 <title>My Performance — Life RPG</title>
 </head>
 <body>
 <div class="app-shell">
   <header class="topbar">
-    <div class="brand"><div class="logo">MP</div><div><div class="eyebrow">LIFE RPG</div><h1>My Performance</h1></div></div>
+    <div class="brand"><div class="logo">MP</div><div><div class="eyebrow">LIFE RPG · SCHEDULER 2.0</div><h1>My Performance</h1></div></div>
     <div class="top-actions"><button class="btn" id="installBtn" hidden>Instalar</button><button class="btn primary" id="quickAdd">+ Quest</button></div>
   </header>
   <section id="hud" class="hud"></section>
@@ -41,13 +43,15 @@
 <script src="cloud-sync.js"></script>
 <script src="planner.js"></script>
 <script src="routine.js"></script>
-<script src="muay-optional.js"></script>
 <script src="adaptive-engine.js"></script>
+<script src="scheduler-core.js"></script>
+<script src="scheduler-v2-state.js"></script>
+<script src="scheduler-v2-engine.js"></script>
+<script src="scheduler-v2-ui.js"></script>
 <script src="runtime-hooks.js"></script>
 <script src="notifications.js"></script>
 <script src="narrator.js"></script>
-<script src="day-controls.js"></script>
-<script src="weekend-protection.js"></script>
-<script src="capacity-budget.js"></script>
+<script src="narrator-scheduler.js"></script>
+<script src="pwa-enhancements.js"></script>
 </body>
 </html>
