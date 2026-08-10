@@ -36,6 +36,8 @@ jobs:
           node --check sw.js
       - name: Scheduler 2.0 unit tests
         run: node tests/scheduler2.test.js
+      - name: Live capacity tests
+        run: node tests/live-capacity.test.js
       - name: Validate quest catalog and scheduler contracts
         run: |
           node <<'NODE'
