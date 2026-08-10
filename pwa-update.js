@@ -33,8 +33,8 @@
         worker.postMessage({type:'SKIP_WAITING'});
         await changed;
       }
-      // Remove only old My Performance caches so an older shell cannot be resurrected.
-      try{const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('my-performance-')).map(k=>caches.delete(k)))}catch{}
+      // The new worker activation already deletes older my-performance caches.
+      // Reload only after activation, using a cache-busting URL so the new shell cannot fall back to the previous document.
       cacheBust(remoteVersion||'latest');
     }catch(e){console.error('PWA atomic update failed',e);if(btn){btn.disabled=false;btn.textContent='Tentar novamente'}}finally{updateInFlight=false}
   }
