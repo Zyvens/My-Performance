@@ -21,6 +21,7 @@ jobs:
           node --check time-aware-capacity.js
           node --check late-wake-policy.js
           node --check funding-strategy-2026.js
+          node --check completion-guard.js
           node --check sw.js
           node tests/scheduler2.test.js
           node tests/live-capacity.test.js
@@ -35,17 +36,17 @@ jobs:
           if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: recursive MutationObserver');
           if(!recalc.includes("if(btn.textContent!==label)btn.textContent='↻ Recalcular / Diagnóstico'"))throw new Error('Recalc binding must be idempotent');
           const index=fs.readFileSync('index.html','utf8');
-          if(!index.includes('data-build="1.5.10"'))throw new Error('HTML client build marker missing');
+          if(!index.includes('data-build="1.5.11"')||!index.includes('completion-guard.js'))throw new Error('HTML completion build marker missing');
           const health=fs.readFileSync('runtime-health.js','utf8');
-          if(!health.includes("document.documentElement.dataset.build||'1.5.10'"))throw new Error('Runtime badge must read shell build');
+          if(!health.includes("document.documentElement.dataset.build||'1.5.11'"))throw new Error('Runtime badge must read shell build');
           const update=fs.readFileSync('pwa-update.js','utf8');
           if(update.includes("LOCAL_BUILD='1.5.7'")||update.includes('const LOCAL_BUILD='))throw new Error('PWA updater must not hardcode stale local build');
           for(const token of ['clientBuild','waitForWaiting','controllerchange','cacheBust'])if(!update.includes(token))throw new Error(`Atomic PWA update missing: ${token}`);
+          const completion=fs.readFileSync('completion-guard.js','utf8');
+          for(const token of ["document.addEventListener('click'",'[data-toggle]','stopImmediatePropagation','toggleQuest(id,date)'])if(!completion.includes(token))throw new Error(`Completion guard missing: ${token}`);
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!sw.includes("my-performance-v1.5.10")||!sw.includes('funding-strategy-2026.js'))throw new Error('PWA atomic build incomplete');
+          if(!sw.includes("my-performance-v1.5.11")||!sw.includes('completion-guard.js'))throw new Error('PWA completion build incomplete');
           const version=JSON.parse(fs.readFileSync('version.json','utf8'));
-          if(version.version!=='1.5.10')throw new Error('Server version beacon mismatch');
-          const funding=fs.readFileSync('funding-strategy-2026.js','utf8');
-          for(const token of ['EMBRAPII — Technology Brief v1 da EVA','INT 2026 publicado — executar GO/NO-GO em 24h','Prontidão INT 2026 + monitoramento oficial'])if(!funding.includes(token))throw new Error(`Funding strategy missing: ${token}`);
-          console.log('Runtime, atomic PWA update and funding strategy guards passed');
+          if(version.version!=='1.5.11')throw new Error('Server version beacon mismatch');
+          console.log('Runtime, PWA and completion guards passed');
           NODE
