@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07130f">
+<meta name="description" content="My Performance — RPG pessoal de metas, hábitos, carreira, estudos e GSA.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<title>My Performance — Life RPG</title>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand"><div class="logo">MP</div><div><div class="eyebrow">LIFE RPG</div><h1>My Performance</h1></div></div>
+    <div class="top-actions"><button class="btn" id="installBtn" hidden>Instalar</button><button class="btn primary" id="quickAdd">+ Quest</button></div>
+  </header>
+  <section id="hud" class="hud"></section>
+  <nav class="nav" id="topNav">
+    <button data-view="dashboard" class="active">Dashboard</button><button data-view="today">Hoje</button><button data-view="quests">Quests</button><button data-view="agenda">Agenda</button><button data-view="player">Player</button><button data-view="rewards">Recompensas</button><button data-view="config">Config</button>
+  </nav>
+  <main id="view"></main>
+</div>
+<nav class="bottom-nav">
+  <button data-view="dashboard" class="active"><b>⌂</b>Início</button><button data-view="today"><b>⚔</b>Hoje</button><button data-view="quests"><b>☷</b>Quests</button><button data-view="agenda"><b>▦</b>Agenda</button><button data-view="player"><b>♜</b>Player</button><button data-view="config"><b>⚙</b>Config</button>
+</nav>
+<div class="toast" id="toast"></div>
+<div id="modal"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="cloud-sync.js"></script>
+</body>
+</html>
