@@ -29,7 +29,7 @@ jobs:
           const fs=require('fs');
           const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
           if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: MutationObserver can recursively mutate the same button');
-          if(!recalc.includes("if(btn.textContent!==label)btn.textContent=label"))throw new Error('Recalc binding must be idempotent');
+          if(!recalc.includes("if(btn.textContent!==label)btn.textContent='↻ Recalcular / Diagnóstico'"))throw new Error('Recalc binding must be idempotent');
           if(!recalc.includes('requestAnimationFrame'))throw new Error('Recalc mutation binding must be coalesced');
           const health=fs.readFileSync('runtime-health.js','utf8');
           if(!health.includes("setText(card.querySelector('b'),'Dentro da janela')"))throw new Error('False overload cleanup missing');
