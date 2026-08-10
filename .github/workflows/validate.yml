@@ -18,6 +18,7 @@ jobs:
           node --check data.js
           node --check app.js
           node --check cloud-sync.js
+          node --check planner.js
           node --check sw.js
       - name: Validate quest catalog
         run: |
