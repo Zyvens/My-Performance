@@ -20,25 +20,42 @@ PWA pessoal gamificado para organizar **vida pessoal, GSA, carreira e estudos** 
 - Quest Debt para missões únicas vencidas.
 - Dashboard, Hoje, Quest Log, Agenda, ficha do Player, Recompensas e Configurações.
 - PWA instalável e funcionamento offline.
-- Persistência local imediata + sincronização opcional em **Neon Postgres** pela **Neon Data API**.
+- Persistência local imediata + sincronização em **Neon Postgres** usando **Neon Auth + Neon Data API**.
 
 ## Arquitetura
 
-O projeto é deliberadamente estático:
+O front-end continua 100% estático:
 
 ```text
 GitHub Pages
    ↓ HTTPS
+Neon Auth (sessão/JWT)
+   ↓
 Neon Data API
-   ↓ RPC protegida por chave com hash
+   ↓ RLS + RPC
 Neon Postgres
 ```
 
-Nenhuma `DATABASE_URL`, senha de Postgres ou API key administrativa é colocada no JavaScript do site.
+Nenhuma `DATABASE_URL`, senha de Postgres ou API key administrativa é colocada no JavaScript do site. As URLs públicas do Neon Auth e da Data API já estão configuradas em `cloud-sync.js`.
+
+Cada conta Neon Auth possui seu próprio save. A política de Row-Level Security associa o estado ao `auth.user_id()` do JWT, impedindo que uma conta leia o save de outra.
+
+## Status da infraestrutura Neon
+
+O projeto **My Performance** já foi provisionado no Neon com:
+
+- banco `neondb`;
+- Neon Auth ativo;
+- Neon Data API ativa;
+- origem confiável `https://zyvens.github.io`;
+- tabela `my_performance_state`;
+- RLS por usuário autenticado;
+- RPC `my_performance_pull()`;
+- RPC `my_performance_push(p_state)`.
+
+O arquivo `neon-setup.sql` representa o schema atual e pode ser usado para reconstruir a camada de persistência em outro projeto Neon.
 
 ## 1. Publicar no GitHub Pages
-
-Depois de fazer merge desta branch em `main`:
 
 1. Abra o repositório no GitHub.
 2. Entre em **Settings → Pages**.
@@ -50,42 +67,30 @@ Depois de fazer merge desta branch em `main`:
 
 O app não precisa de npm, build ou servidor Node.
 
-## 2. Criar o Neon Postgres
-
-1. Crie um projeto no Neon.
-2. Abra o **SQL Editor**.
-3. Abra o arquivo `neon-setup.sql` deste repositório.
-4. Troque `CHANGE_THIS_SYNC_KEY` por uma frase-senha longa e exclusiva.
-5. Execute o arquivo completo.
-
-Isso cria `my_performance_state` e duas funções RPC: `my_performance_pull` e `my_performance_push`. A chave é armazenada com hash `bcrypt/pgcrypto`; o valor em texto puro não fica no banco.
-
-## 3. Ativar a Neon Data API
-
-No projeto Neon:
-
-1. Abra **Data API**.
-2. Ative a Data API para o mesmo banco em que rodou `neon-setup.sql`.
-3. Para este modelo pessoal, habilite acesso **unauthenticated**. O SQL revoga acesso direto à tabela e concede ao papel `anonymous` apenas execução das duas funções RPC.
-4. Copie a **Data API URL** mostrada pelo Neon.
-5. Se você acabou de criar ou alterar as funções e a Neon oferecer **Refresh schema cache**, execute-o.
-
-## 4. Conectar o app à nuvem
+## 2. Primeiro acesso e criação do save em cloud
 
 No My Performance:
 
 1. Vá a **Config → Neon Postgres → Cloud Sync**.
-2. Cole a **Data API URL**.
-3. Perfil: `vitor`.
-4. Chave: exatamente a mesma que você colocou em `neon-setup.sql`.
-5. Marque **Ativar sincronização**.
-6. Clique em **Salvar e sincronizar**.
+2. Digite o e-mail que deseja usar para o My Performance.
+3. Defina uma senha com pelo menos 8 caracteres.
+4. Clique em **Criar conta** no primeiro dispositivo.
+5. O app cria a sessão Neon Auth e envia automaticamente o estado local inicial para o Postgres.
 
-Na primeira conexão, se a linha do Neon ainda estiver vazia, o app envia automaticamente os dados do dispositivo atual.
+A senha não é armazenada pelo My Performance no `localStorage`.
 
-No segundo dispositivo, repita URL, perfil e chave. O app baixa o estado mais recente e continua sincronizando automaticamente após alterações.
+## 3. Usar em outro celular ou PC
 
-## 5. Instalar no celular ou PC
+No outro dispositivo:
+
+1. Abra a mesma URL do GitHub Pages.
+2. Entre em **Config → Neon Postgres → Cloud Sync**.
+3. Informe o mesmo e-mail e senha.
+4. Clique em **Entrar e sincronizar**.
+
+O estado mais recente é carregado do Neon. Depois disso, alterações continuam sendo salvas localmente primeiro e sincronizadas automaticamente quando houver conexão.
+
+## 4. Instalar no celular ou PC
 
 ### Android / Chrome
 
@@ -106,8 +111,8 @@ O service worker mantém os arquivos essenciais em cache; portanto a interface c
 - `styles.css` — design responsivo desktop/mobile.
 - `data.js` — catálogo inicial com 108 quests e dados de RPG.
 - `app.js` — engine de recorrência, dependências, XP, agenda, achievements e editor.
-- `cloud-sync.js` — sincronização local-first com a Neon Data API.
-- `neon-setup.sql` — tabela, hash da chave e RPCs seguras.
+- `cloud-sync.js` — Neon Auth + sincronização local-first pela Neon Data API.
+- `neon-setup.sql` — tabela, RLS e RPCs autenticadas.
 - `sw.js` + `manifest.webmanifest` — PWA/offline.
 
 ## Backup manual
