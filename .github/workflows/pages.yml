@@ -31,6 +31,7 @@ jobs:
           node --check live-capacity.js
           node --check time-aware-core.js
           node --check time-aware-capacity.js
+          node --check late-wake-policy.js
           node --check recalc-center-fix.js
           node --check runtime-health.js
           node --check pwa-update.js
