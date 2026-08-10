@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional]
+    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine]
 
 jobs:
   validate:
@@ -22,8 +22,10 @@ jobs:
           node --check planner.js
           node --check routine.js
           node --check muay-optional.js
+          node --check adaptive-engine.js
           node --check runtime-hooks.js
           node --check notifications.js
+          node --check narrator.js
           node --check sw.js
       - name: Validate quest catalog
         run: |
@@ -46,5 +48,7 @@ jobs:
           const counts=qs.reduce((o,q)=>(o[q.domain]=(o[q.domain]||0)+1,o),{});
           const required=['routine-water-am','routine-muay','routine-gsa-focus-pm','routine-hygiene-night'];
           for(const id of required)if(!ids.has(id))throw new Error(`Missing routine quest: ${id}`);
+          if(!fs.readFileSync('adaptive-engine.js','utf8').includes("SYSTEM_START='2026-08-10'"))throw new Error('Adaptive engine must start on 2026-08-10');
+          if(!fs.readFileSync('narrator.js','utf8').includes('speechSynthesis'))throw new Error('Narrator speech engine missing');
           console.log(`Validated ${qs.length} quests`,counts);
           NODE
