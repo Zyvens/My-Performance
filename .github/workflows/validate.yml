@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine]
+    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance]
 
 jobs:
   validate:
@@ -26,6 +26,7 @@ jobs:
           node --check runtime-hooks.js
           node --check notifications.js
           node --check narrator.js
+          node --check day-controls.js
           node --check sw.js
       - name: Validate quest catalog
         run: |
@@ -50,5 +51,9 @@ jobs:
           for(const id of required)if(!ids.has(id))throw new Error(`Missing routine quest: ${id}`);
           if(!fs.readFileSync('adaptive-engine.js','utf8').includes("SYSTEM_START='2026-08-10'"))throw new Error('Adaptive engine must start on 2026-08-10');
           if(!fs.readFileSync('narrator.js','utf8').includes('speechSynthesis'))throw new Error('Narrator speech engine missing');
+          const day=fs.readFileSync('day-controls.js','utf8');
+          if(!day.includes("GSA:{title:'GSA — avanço mínimo diário'"))throw new Error('Daily GSA minimum missing');
+          if(!day.includes("Estudos:{title:'Estudos — sessão mínima diária'"))throw new Error('Daily study minimum missing');
+          if(!day.includes('EXTRA_MIN=120')||!day.includes('MIN_SLEEP_HOURS=6'))throw new Error('Emergency day rules missing');
           console.log(`Validated ${qs.length} quests`,counts);
           NODE
