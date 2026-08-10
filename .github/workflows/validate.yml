@@ -1,0 +1,41 @@
+name: Validate My Performance
+
+on:
+  pull_request:
+  push:
+    branches: [agent/life-rpg]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check data.js
+          node --check app.js
+          node --check cloud-sync.js
+          node --check sw.js
+      - name: Validate quest catalog
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          const ctx={console};vm.createContext(ctx);
+          vm.runInContext(fs.readFileSync('data.js','utf8'),ctx);
+          const qs=ctx.QUEST_SEED;
+          if(!Array.isArray(qs)||qs.length<100)throw new Error(`Expected >=100 quests, got ${qs?.length}`);
+          const ids=new Set();
+          for(const q of qs){
+            if(!q.id||!q.title)throw new Error('Quest without id/title');
+            if(ids.has(q.id))throw new Error(`Duplicate quest id: ${q.id}`);
+            ids.add(q.id);
+          }
+          const broken=[];
+          for(const q of qs)for(const d of q.dependencies||[])if(!ids.has(d))broken.push(`${q.id} -> ${d}`);
+          if(broken.length)throw new Error(`Broken dependencies: ${broken.join(', ')}`);
+          const counts=qs.reduce((o,q)=>(o[q.domain]=(o[q.domain]||0)+1,o),{});
+          console.log(`Validated ${qs.length} quests`,counts);
+          NODE
