@@ -19,22 +19,21 @@
   function hideBanner(){const b=document.getElementById('pwaUpdateBanner');if(b)b.style.display='none'}
   async function serverVersion(){try{const r=await fetch(`./version.json?t=${Date.now()}`,{cache:'no-store'});if(!r.ok)return null;return await r.json()}catch{return null}}
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  async function waitForWaiting(reg,timeout=8000){const start=Date.now();while(Date.now()-start<timeout){if(reg.waiting)return reg.waiting;await sleep(120);try{await reg.update()}catch{}}return reg.waiting||null}
+  function controllerChange(timeout=8000){return new Promise(resolve=>{let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(timer);navigator.serviceWorker.removeEventListener('controllerchange',finish);resolve(true)};const timer=setTimeout(()=>{if(done)return;done=true;navigator.serviceWorker.removeEventListener('controllerchange',finish);resolve(false)},timeout);navigator.serviceWorker.addEventListener('controllerchange',finish)})}
+  async function waitForWaitingOrController(reg,before,timeout=8000){const start=Date.now();while(Date.now()-start<timeout){if(reg.waiting)return{waiting:reg.waiting,changed:false};if(navigator.serviceWorker.controller&&navigator.serviceWorker.controller!==before)return{waiting:null,changed:true};await sleep(100)}return{waiting:reg.waiting||null,changed:!!(navigator.serviceWorker.controller&&navigator.serviceWorker.controller!==before)}}
   function cacheBust(version){const u=new URL(location.href);u.searchParams.set('_mpv',version||Date.now().toString());u.searchParams.set('_mpr',Date.now().toString());location.replace(u.toString())}
 
   async function applyUpdate(reg,remoteVersion){
     if(updateInFlight)return;updateInFlight=true;
     const btn=document.getElementById('pwaUpdateNow');if(btn){btn.disabled=true;btn.textContent='Atualizando…'}
     try{
+      const before=navigator.serviceWorker.controller,changedPromise=controllerChange(9000);
       await reg.update();
-      const worker=await waitForWaiting(reg,8000);
-      if(worker){
-        const changed=new Promise(resolve=>{const timer=setTimeout(resolve,5000);navigator.serviceWorker.addEventListener('controllerchange',()=>{clearTimeout(timer);resolve()},{once:true})});
-        worker.postMessage({type:'SKIP_WAITING'});
-        await changed;
-      }
-      // The new worker activation already deletes older my-performance caches.
-      // Reload only after activation, using a cache-busting URL so the new shell cannot fall back to the previous document.
+      const status=await waitForWaitingOrController(reg,before,8000);
+      if(status.waiting){status.waiting.postMessage({type:'SKIP_WAITING'});await changedPromise}
+      else if(!status.changed&&navigator.serviceWorker.controller===before)await changedPromise;
+      // Activation deletes old my-performance caches. Reload only after the controller transition,
+      // with a cache-busting URL so an older document cannot be revived.
       cacheBust(remoteVersion||'latest');
     }catch(e){console.error('PWA atomic update failed',e);if(btn){btn.disabled=false;btn.textContent='Tentar novamente'}}finally{updateInFlight=false}
   }
