@@ -1,0 +1,8 @@
+/* Scheduler modal compatibility + stable recalc label */
+.modal-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom));background:rgba(1,7,5,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow:auto}
+.modal-backdrop .modal-card{position:relative;width:min(760px,100%);max-height:calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:auto;overscroll-behavior:contain;margin:auto}
+.modal-close{position:absolute;right:14px;top:14px;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#071611;color:var(--text);font-size:24px;line-height:1;display:grid;place-items:center;z-index:2}
+body:has(.modal-backdrop){overflow:hidden}
+#adaptiveRecalc{font-size:0}
+#adaptiveRecalc::after{content:'↻ Recalcular / Diagnóstico';font-size:15px;font-weight:800}
+@media(max-width:720px){.modal-backdrop{place-items:end center;padding:12px 10px max(10px,env(safe-area-inset-bottom))}.modal-backdrop .modal-card{width:100%;max-height:calc(92dvh - env(safe-area-inset-bottom));border-radius:20px 20px 14px 14px;padding:18px 16px}.modal-close{right:10px;top:10px}.recalc-grid{gap:8px}}
