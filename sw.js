@@ -1,5 +1,5 @@
-const CACHE='my-performance-v1.2.1';
-const ASSETS=['./','./index.html','./styles.css','./planner.css','./routine.css','./data.js','./routine-data.js','./app.js','./cloud-sync.js','./planner.js','./routine.js','./runtime-hooks.js','./notifications.js','./manifest.webmanifest','./icon.svg'];
+const CACHE='my-performance-v1.2.2';
+const ASSETS=['./','./index.html','./styles.css','./planner.css','./routine.css','./data.js','./routine-data.js','./app.js','./cloud-sync.js','./planner.js','./routine.js','./muay-optional.js','./runtime-hooks.js','./notifications.js','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
