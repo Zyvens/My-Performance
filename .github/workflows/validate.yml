@@ -3,7 +3,7 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection]
+    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection, agent/capacity-budget-bni]
 
 jobs:
   validate:
@@ -28,6 +28,7 @@ jobs:
           node --check narrator.js
           node --check day-controls.js
           node --check weekend-protection.js
+          node --check capacity-budget.js
           node --check sw.js
       - name: Validate quest catalog
         run: |
@@ -59,6 +60,9 @@ jobs:
           const week=fs.readFileSync('weekend-protection.js','utf8');
           if(!week.includes("Sexta encerra às 18:00"))throw new Error('Friday cutoff missing');
           if(!week.includes("Sábado encerra às 12:00"))throw new Error('Saturday cutoff missing');
-          if(!week.includes("Domingo protegido: sem cronograma"))throw new Error('Sunday protection missing');
+          if(!week.includes('Domingo pessoal: trabalho e estudo bloqueados'))throw new Error('Sunday personal-only protection missing');
+          const cap=fs.readFileSync('capacity-budget.js','utf8');
+          for(const token of ['GSA_TARGET=480','WORKOUT_TARGET=5',"gsa-bni-weekly","gsa-bni-organization","gsa-main-hacktown-2026","gsa-main-eva-launch","gsa-main-editais","commuteOutMin","commuteReturnMin"])if(!cap.includes(token))throw new Error(`Capacity rule missing: ${token}`);
+          if(!cap.includes("p.wake=5*60")||!cap.includes("p.end=21*60"))throw new Error('Wednesday BNI wake/sleep window missing');
           console.log(`Validated ${qs.length} quests`,counts);
           NODE
