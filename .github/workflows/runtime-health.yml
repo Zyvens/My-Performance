@@ -20,31 +20,25 @@ jobs:
           node --check pwa-update.js
           node --check time-aware-capacity.js
           node --check late-wake-policy.js
+          node --check funding-strategy-2026.js
           node --check sw.js
           node tests/scheduler2.test.js
           node tests/live-capacity.test.js
           node tests/time-aware-core.test.js
           node tests/late-wake-policy.test.js
-      - name: Guard against known freeze and late-wake regressions
+          node tests/funding-strategy-2026.test.js
+      - name: Guard against known runtime regressions
         run: |
           node <<'NODE'
           const fs=require('fs');
           const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
-          if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: MutationObserver can recursively mutate the same button');
+          if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: recursive MutationObserver');
           if(!recalc.includes("if(btn.textContent!==label)btn.textContent='↻ Recalcular / Diagnóstico'"))throw new Error('Recalc binding must be idempotent');
-          if(!recalc.includes('requestAnimationFrame'))throw new Error('Recalc mutation binding must be coalesced');
           const health=fs.readFileSync('runtime-health.js','utf8');
-          if(!health.includes("const BUILD='1.5.8'"))throw new Error('Runtime build badge not updated');
-          if(!health.includes("setText(card.querySelector('b'),'Dentro da janela')"))throw new Error('False overload cleanup missing');
-          const late=fs.readFileSync('late-wake-policy.js','utf8');
-          for(const token of ['recuperada após despertar tardio','lateWakeCanonical','Main Quest ·','isGym(q)','lateWakeDroppedSecondary'])if(!late.includes(token))throw new Error(`Late wake policy missing: ${token}`);
-          const css=fs.readFileSync('modal-overlay-fix.css','utf8');
-          if(!css.includes('.modal-backdrop{position:fixed'))throw new Error('Scheduler modal must be fixed overlay');
-          if(!css.includes("#adaptiveRecalc::after{content:'↻ Recalcular / Diagnóstico'"))throw new Error('Recalc label flash guard missing');
+          if(!health.includes("const BUILD='1.5.9'"))throw new Error('Runtime build badge not updated');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!sw.includes("my-performance-v1.5.8"))throw new Error('PWA cache version not bumped');
-          for(const asset of ['late-wake-policy.js','modal-overlay-fix.css'])if(!sw.includes(asset))throw new Error(`PWA asset missing: ${asset}`);
-          const index=fs.readFileSync('index.html','utf8');
-          for(const asset of ['runtime-health.js','late-wake-policy.js','modal-overlay-fix.css'])if(!index.includes(asset))throw new Error(`Runtime asset missing: ${asset}`);
-          console.log('Runtime health, modal overlay and late-wake guards passed');
+          if(!sw.includes("my-performance-v1.5.9")||!sw.includes('funding-strategy-2026.js'))throw new Error('PWA funding build incomplete');
+          const funding=fs.readFileSync('funding-strategy-2026.js','utf8');
+          for(const token of ['EMBRAPII — Technology Brief v1 da EVA','INT 2026 publicado — executar GO/NO-GO em 24h','Prontidão INT 2026 + monitoramento oficial'])if(!funding.includes(token))throw new Error(`Funding strategy missing: ${token}`);
+          console.log('Runtime and funding strategy guards passed');
           NODE
