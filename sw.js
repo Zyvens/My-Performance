@@ -1,5 +1,5 @@
-const CACHE='my-performance-v1.0.0';
-const ASSETS=['./','./index.html','./styles.css','./data.js','./app.js','./cloud-sync.js','./manifest.webmanifest','./icon.svg'];
+const CACHE='my-performance-v1.1.0';
+const ASSETS=['./','./index.html','./styles.css','./planner.css','./data.js','./app.js','./cloud-sync.js','./planner.js','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{
