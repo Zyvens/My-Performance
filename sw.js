@@ -1,13 +1,11 @@
 const BUILD='1.5.20';
-const CACHE=`my-performance-v${BUILD}`;
+const CACHE='my-performance-v1.5.20';
 const ASSETS=['./','./index.html','./styles.css','./planner.css','./routine.css','./adaptive.css','./narrator.css','./day-controls.css','./capacity-budget.css','./scheduler-2.css','./modal-overlay-fix.css','./data.js','./routine-data.js','./fixed-commitments.js','./app.js','./scheduler-core.js','./cloud-sync.js','./planner.js','./routine.js','./muay-optional.js','./adaptive-engine.js','./adaptive-fairness.js','./runtime-hooks.js','./notifications.js','./narrator.js','./day-controls.js','./weekend-protection.js','./capacity-budget.js','./balanced-capacity.js','./funding-strategy-2026.js','./post-funding-rebalance.js','./canonical-week-template.js','./canonical-week-policy.js','./scheduler-2.js','./mobile-nav-fix.js','./live-capacity.js','./pwa-update.js','./recalc-center-fix.js','./time-aware-core.js','./time-aware-capacity.js','./late-wake-policy.js','./discard-day.js','./runtime-health.js','./completion-guard.js','./schedule-authority.js','./version.json','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
   const keys=await caches.keys();
   await Promise.all(keys.filter(key=>key.startsWith('my-performance-')&&key!==CACHE).map(key=>caches.delete(key)));
   await self.clients.claim();
-  // A controller change used to leave an already-open tab running the old JS bundle.
-  // v1.5.20 actively navigates controlled windows once so the canonical schedule is actually loaded.
   const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
   await Promise.all(windows.map(async client=>{
     try{
