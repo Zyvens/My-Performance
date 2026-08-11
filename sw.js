@@ -1,8 +1,23 @@
-const CACHE='my-performance-v1.5.19';
+const BUILD='1.5.20';
+const CACHE='my-performance-v1.5.20';
 const ASSETS=['./','./index.html','./styles.css','./planner.css','./routine.css','./adaptive.css','./narrator.css','./day-controls.css','./capacity-budget.css','./scheduler-2.css','./modal-overlay-fix.css','./data.js','./routine-data.js','./fixed-commitments.js','./app.js','./scheduler-core.js','./cloud-sync.js','./planner.js','./routine.js','./muay-optional.js','./adaptive-engine.js','./adaptive-fairness.js','./runtime-hooks.js','./notifications.js','./narrator.js','./day-controls.js','./weekend-protection.js','./capacity-budget.js','./balanced-capacity.js','./funding-strategy-2026.js','./post-funding-rebalance.js','./canonical-week-template.js','./canonical-week-policy.js','./scheduler-2.js','./mobile-nav-fix.js','./live-capacity.js','./pwa-update.js','./recalc-center-fix.js','./time-aware-core.js','./time-aware-capacity.js','./late-wake-policy.js','./discard-day.js','./runtime-health.js','./completion-guard.js','./schedule-authority.js','./version.json','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('my-performance-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(key=>key.startsWith('my-performance-')&&key!==CACHE).map(key=>caches.delete(key)));
+  await self.clients.claim();
+  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+  await Promise.all(windows.map(async client=>{
+    try{
+      const u=new URL(client.url);
+      if(u.origin!==self.location.origin)return;
+      if(u.searchParams.get('_mpv')===BUILD)return;
+      u.searchParams.set('_mpv',BUILD);u.searchParams.set('_mpr',Date.now().toString());
+      await client.navigate(u.toString())
+    }catch{}
+  }))
+})()));
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
-self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;const isVersion=url.pathname.endsWith('/version.json');if(isVersion){event.respondWith(fetch(event.request,{cache:'no-store'}).catch(()=>caches.match('./version.json')));return}event.respondWith(fetch(event.request).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});return response}).catch(()=>caches.match(event.request).then(found=>found||((event.request.mode==='navigate')?caches.match('./index.html'):undefined))));});
+self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;const isVersion=url.pathname.endsWith('/version.json');if(isVersion){event.respondWith(fetch(event.request,{cache:'no-store'}).catch(()=>caches.match('./version.json')));return}event.respondWith(fetch(event.request,{cache:'no-store'}).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});return response}).catch(()=>caches.match(event.request).then(found=>found||((event.request.mode==='navigate')?caches.match('./index.html'):undefined))));});
 self.addEventListener('push',event=>{let data={};try{data=event.data?event.data.json():{}}catch(e){data={body:event.data?event.data.text():'Nova missão disponível.'}}const title=data.title||'⚔ My Performance · missão atual';event.waitUntil(self.registration.showNotification(title,{body:data.body||'Abra a agenda para ver sua missão atual.',tag:data.tag||'my-performance-push',renotify:true,requireInteraction:true,icon:'./icon.svg',badge:'./icon.svg',vibrate:[180,90,180,90,300],data:{url:data.url||'./?view=today',questId:data.questId||''},actions:[{action:'open',title:'Abrir agenda'}]}));});
 self.addEventListener('notificationclick',event=>{event.notification.close();const target=event.notification.data?.url||'./?view=today';event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{for(const client of list){if('focus'in client){client.postMessage({type:'OPEN_TODAY',questId:event.notification.data?.questId||''});return client.focus()}}return clients.openWindow?clients.openWindow(target):undefined;}));});
