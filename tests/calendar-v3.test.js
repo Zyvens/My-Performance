@@ -44,6 +44,8 @@ const gym=tue.slots.find(x=>x.q?.id==='personal-gym');
 assert(gym&&gym.start===720&&gym.end===810,'Tuesday gym preference must be 12:00-13:30');
 assert(!tue.slots.some(x=>x.q?.id==='personal-gym'&&x.start===390),'Tuesday gym must never be resurrected at 06:30');
 assert(tue.slots.some(x=>x.q?.id==='routine-shower-post-gym'),'Tuesday shower mission must stay on Tuesday, but remain movable');
+const preferenceOnly=['personal-wake','routine-water-am','routine-hygiene-am','personal-breakfast','personal-gym','routine-shower-post-gym','personal-lunch','routine-dinner','routine-hygiene-night','personal-sleep','personal-evening-activity'];
+for(const id of preferenceOnly)assert(tue.slots.filter(x=>x.q?.id===id).length<=1,`${id} must never be scheduled twice on the same day`);
 for(let i=1;i<tue.slots.length;i++){const a=tue.slots[i-1],b=tue.slots[i];if(a.end>b.start)throw new Error(`Tuesday overlap: ${a.q?.title} ${a.start}-${a.end} x ${b.q?.title} ${b.start}-${b.end}`)}
 const wed=E.planDay('2026-08-12');const bni=wed.slots.find(x=>x.q?.id==='gsa-bni-weekly');assert(bni&&bni.start===360&&bni.end===660&&bni.fixed,'BNI must remain fixed Wednesday 06:00-11:00');
 const thu=E.planDay('2026-08-13');const cell=thu.slots.find(x=>x.q?.id==='personal-zion-brave-weekly');assert(cell&&cell.start===1140&&cell.end===1380&&cell.fixed,'Zion Brave must remain fixed Thursday 19:00-23:00');
