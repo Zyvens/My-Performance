@@ -1,7 +1,7 @@
 "use strict";
 /* Runtime Health Guard — prevents false overload UI and exposes the exact build loaded by the browser. */
 (function(){
-  const BUILD=String(document.documentElement.dataset.build||'1.5.19');
+  const BUILD=String(document.documentElement.dataset.build||'1.5.20');
   let scheduled=false;
   const duration=x=>Math.max(0,Number(x?.end||0)-Number(x?.start||0));
   const isSleep=x=>x?.q?.id==='personal-sleep'||/^(dormir|sono)$/i.test(String(x?.q?.title||'').trim());
