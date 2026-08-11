@@ -15,9 +15,11 @@ const qmap={
 function base(date){return{date,wake:360,end:1320,requestedSleep:1320,slots:[],capacityDeferred:[],movedOut:[],capacityWarnings:[],critical:[],capacity:{}}}
 const state={weekendProtection:{extreme:{}}};
 const window={MyPerformanceRoutine:{planDay:date=>base(date),missionNow:()=>null,toTime:m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`},MyPerformanceAdaptive:{priority:q=>q.priorityLevel||(q.questType==='main'?'high':'normal')}};
-const context={window,state,today:()=> '2026-08-10',dfrom,addDays,diffDays,done:()=>false,questById:id=>qmap[id]||null,toTime:window.MyPerformanceRoutine.toTime,Date,console};
-vm.createContext(context);vm.runInContext(fs.readFileSync('canonical-week-template.js','utf8'),context);
-const plan=date=>context.window.MyPerformanceCanonicalWeek.plan(date);
+const context={window,state,today:()=> '2026-08-10',dfrom,addDays,diffDays,done:()=>false,questById:id=>qmap[id]||null,Date,console};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('canonical-week-template.js','utf8'),context);
+vm.runInContext(fs.readFileSync('canonical-week-policy.js','utf8'),context);
+const plan=date=>context.window.MyPerformanceRoutine.planDay(date);
 const minutes=(p,domain)=>p.slots.filter(x=>x.q.domain===domain).reduce((n,x)=>n+x.end-x.start,0);
 const byId=(p,id)=>p.slots.find(x=>x.q.id===id);
 function noCollision(p){const xs=p.slots.slice().sort((a,b)=>a.start-b.start||a.end-b.end);for(let i=1;i<xs.length;i++)assert(xs[i-1].end<=xs[i].start,`${p.date}: ${xs[i-1].q.title} collides with ${xs[i].q.title}`)}
