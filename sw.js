@@ -1,6 +1,6 @@
 const BUILD='2.0.0';
 const CACHE='my-performance-v2.0.0';
-const ASSETS=['./','./index.html','./styles.css','./planner.css','./narrator.css','./calendar-v3.css','./data.js','./routine-data.js','./app.js','./scheduler-core.js','./planner.js','./calendar-model-v3.js','./planner-engine-v3.js','./calendar-runtime-v3.js','./cloud-sync-v2.js','./notifications.js','./pwa-update.js','./calendar-ui-v3.js','./version.json','./manifest.webmanifest','./icon.svg'];
+const ASSETS=['./','./index.html','./styles.css','./planner.css','./narrator.css','./calendar-v3.css','./data.js','./routine-data.js','./app.js','./scheduler-core.js','./planner.js','./calendar-model-v3.js','./campaign-policy-v3.js','./planner-engine-v3.js','./calendar-runtime-v3.js','./cloud-sync-v2.js','./notifications.js','./pwa-update.js','./calendar-ui-v3.js','./version.json','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
   const keys=await caches.keys();
