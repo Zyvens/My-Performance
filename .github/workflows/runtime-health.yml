@@ -58,6 +58,7 @@ jobs:
           node tests/canonical-week-template.test.js
           node tests/canonical-week-load-order.test.js
           node tests/schedule-authority.test.js
+          node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
       - name: Guard against known runtime regressions
         run: |
@@ -66,11 +67,11 @@ jobs:
           const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
           if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: recursive MutationObserver');
           const index=fs.readFileSync('index.html','utf8');
-          for(const token of ['data-build="1.5.19"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','schedule-authority.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
+          for(const token of ['data-build="1.5.20"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','schedule-authority.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
           if(index.indexOf('schedule-authority.js')<index.indexOf('completion-guard.js'))throw new Error('Schedule authority must load after every previous scheduler/render wrapper');
           if(index.includes('tuesday-therapy-layout.js'))throw new Error('Superseded Tuesday-only scheduler must not be loaded');
           const health=fs.readFileSync('runtime-health.js','utf8');
-          if(!health.includes("document.documentElement.dataset.build||'1.5.19'"))throw new Error('Runtime badge must read shell build');
+          if(!health.includes("document.documentElement.dataset.build||'1.5.20'"))throw new Error('Runtime badge must read shell build');
           const completion=fs.readFileSync('completion-guard.js','utf8');
           for(const token of ['markManual','recordCompletion','unlockChecks','[data-toggle][disabled]','dependencyStatus(q).missing'])if(!completion.includes(token))throw new Error(`Manual completion authority missing: ${token}`);
           if(completion.includes("toast('Quest bloqueada por dependência')"))throw new Error('Manual completion must never be blocked by dependencies');
@@ -88,10 +89,12 @@ jobs:
           for(const token of ['STUDY_MIN=180','WORKOUT_TARGET=6','capacity.workoutTarget=WORKOUT_TARGET'])if(!policy.includes(token))throw new Error(`Canonical week policy missing: ${token}`);
           const authority=fs.readFileSync('schedule-authority.js','utf8');
           for(const token of ["personal-therapy-weekly","gsa-bni-weekly","personal-zion-brave-weekly","STUDY_MIN=180","repairMandatory","renderToday=renderTodayAuthority","canonicalMandatory:true"])if(!authority.includes(token))throw new Error(`Mandatory schedule authority missing: ${token}`);
+          const update=fs.readFileSync('pwa-update.js','utf8');
+          for(const token of ['controllerchange','cacheBust','await applyUpdate(reg,remote.version)','Atualizando agora'])if(!update.includes(token))throw new Error(`Automatic PWA refresh missing: ${token}`);
           const sw=fs.readFileSync('sw.js','utf8');
-          for(const token of ['my-performance-v1.5.19','canonical-week-template.js','canonical-week-policy.js','schedule-authority.js'])if(!sw.includes(token))throw new Error(`PWA schedule-authority build incomplete: ${token}`);
+          for(const token of ["BUILD='1.5.20'",'my-performance-v${BUILD}','canonical-week-template.js','canonical-week-policy.js','schedule-authority.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA forced-refresh build incomplete: ${token}`);
           if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('Service worker must only delete My Performance caches');
           const version=JSON.parse(fs.readFileSync('version.json','utf8'));
-          if(version.version!=='1.5.19')throw new Error('Server version beacon mismatch');
-          console.log('Runtime, PWA and mandatory schedule authority guards passed');
+          if(version.version!=='1.5.20')throw new Error('Server version beacon mismatch');
+          console.log('Runtime, forced PWA refresh and mandatory schedule authority guards passed');
           NODE
