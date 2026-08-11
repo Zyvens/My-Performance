@@ -27,6 +27,7 @@ jobs:
           node --check fixed-commitments.js
           node --check adaptive-fairness.js
           node --check balanced-capacity.js
+          node --check tuesday-therapy-layout.js
           node --check sw.js
           node tests/scheduler2.test.js
           node tests/live-capacity.test.js
@@ -37,6 +38,7 @@ jobs:
           node tests/fixed-commitments.test.js
           node tests/adaptive-fairness.test.js
           node tests/balanced-capacity.test.js
+          node tests/tuesday-therapy-layout.test.js
       - name: Guard against known runtime regressions
         run: |
           node <<'NODE'
@@ -44,7 +46,7 @@ jobs:
           const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
           if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: recursive MutationObserver');
           const index=fs.readFileSync('index.html','utf8');
-          for(const token of ['data-build="1.5.16"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','post-funding-rebalance.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
+          for(const token of ['data-build="1.5.16"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','tuesday-therapy-layout.js','post-funding-rebalance.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
           const health=fs.readFileSync('runtime-health.js','utf8');
           if(!health.includes("document.documentElement.dataset.build||'1.5.16'"))throw new Error('Runtime badge must read shell build');
           const completion=fs.readFileSync('completion-guard.js','utf8');
@@ -54,6 +56,8 @@ jobs:
           for(const token of ['Descartar dia','discardedDays','pendingRelevant','deferAdaptive','rescheduledFromDiscard','completedQuestIds'])if(!discard.includes(token))throw new Error(`Discard day behavior missing: ${token}`);
           const fixed=fs.readFileSync('fixed-commitments.js','utf8');
           for(const token of ["title:'Terapia'","weekdays:[2]","timeStart:'08:00'","timeEnd:'08:30'","commuteOutMin:60","commuteReturnMin:60"])if(!fixed.includes(token))throw new Error(`Tuesday therapy commitment missing: ${token}`);
+          const tuesday=fs.readFileSync('tuesday-therapy-layout.js','utf8');
+          for(const token of ['compromisso fixo soberano da manhã de terça','SLOTS={breakfast','gym:[9*60+30,11*60]','shower:[11*60,11*60+30]','tuesdayTherapyProtected=true'])if(!tuesday.includes(token))throw new Error(`Tuesday therapy-first layout missing: ${token}`);
           const fairness=fs.readFileSync('adaptive-fairness.js','utf8');
           for(const token of ['Hard rule: NEVER reuse parentId+date','hardDedup:true','fairnessLate','Adaptive fairness invariant violated'])if(!fairness.includes(token))throw new Error(`Adaptive hard dedup missing: ${token}`);
           const postFunding=fs.readFileSync('post-funding-rebalance.js','utf8');
@@ -61,8 +65,8 @@ jobs:
           const balance=fs.readFileSync('balanced-capacity.js','utf8');
           for(const token of ['STUDY_MIN=90','GSA_SOFT_TARGET=480','capacityStudyProtected','meta flexível'])if(!balance.includes(token))throw new Error(`Balanced capacity missing: ${token}`);
           const sw=fs.readFileSync('sw.js','utf8');
-          for(const token of ['my-performance-v1.5.16','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','post-funding-rebalance.js'])if(!sw.includes(token))throw new Error(`PWA scheduler build incomplete: ${token}`);
+          for(const token of ['my-performance-v1.5.16','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','tuesday-therapy-layout.js','post-funding-rebalance.js'])if(!sw.includes(token))throw new Error(`PWA scheduler build incomplete: ${token}`);
           const version=JSON.parse(fs.readFileSync('version.json','utf8'));
           if(version.version!=='1.5.16')throw new Error('Server version beacon mismatch');
-          console.log('Runtime, PWA, balanced scheduling and Avançar hard dedup guards passed');
+          console.log('Runtime, PWA, therapy-first Tuesday, balanced scheduling and Avançar hard dedup guards passed');
           NODE
