@@ -33,6 +33,7 @@ jobs:
           node --check calendar-model-fastpath-v4.js
           node --check calendar-domain-v5.js
           node --check planner-engine-v5.js
+          node --check calendar-actions-v5.js
           node --check calendar-runtime-v3.js
           node --check cloud-sync-v2.js
           node --check notifications.js
