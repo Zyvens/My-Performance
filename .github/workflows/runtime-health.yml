@@ -10,9 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Require PWA version bump for runtime changes
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          CHANGED="$(git diff --name-only "$BASE_SHA"...HEAD)"
+          if echo "$CHANGED" | grep -Eq '(^|/).+\.js$|(^|/).+\.css$|^index\.html$|^manifest\.webmanifest$'; then
+            BASE_VERSION="$(git show "$BASE_SHA:version.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).version))")"
+            CURRENT_VERSION="$(node -e "process.stdout.write(require('./version.json').version)")"
+            if [ "$BASE_VERSION" = "$CURRENT_VERSION" ]; then
+              echo "Runtime/PWA changed without version bump: still $CURRENT_VERSION"
+              exit 1
+            fi
+          fi
       - name: Syntax and scheduler tests
         run: |
           node --check recalc-center-fix.js
@@ -46,9 +61,9 @@ jobs:
           const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
           if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: recursive MutationObserver');
           const index=fs.readFileSync('index.html','utf8');
-          for(const token of ['data-build="1.5.16"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','tuesday-therapy-layout.js','post-funding-rebalance.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
+          for(const token of ['data-build="1.5.17"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','tuesday-therapy-layout.js','post-funding-rebalance.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
           const health=fs.readFileSync('runtime-health.js','utf8');
-          if(!health.includes("document.documentElement.dataset.build||'1.5.16'"))throw new Error('Runtime badge must read shell build');
+          if(!health.includes("document.documentElement.dataset.build||'1.5.17'"))throw new Error('Runtime badge must read shell build');
           const completion=fs.readFileSync('completion-guard.js','utf8');
           for(const token of ['markManual','recordCompletion','unlockChecks','[data-toggle][disabled]','dependencyStatus(q).missing'])if(!completion.includes(token))throw new Error(`Manual completion authority missing: ${token}`);
           if(completion.includes("toast('Quest bloqueada por dependência')"))throw new Error('Manual completion must never be blocked by dependencies');
@@ -65,8 +80,8 @@ jobs:
           const balance=fs.readFileSync('balanced-capacity.js','utf8');
           for(const token of ['STUDY_MIN=90','GSA_SOFT_TARGET=480','capacityStudyProtected','meta flexível'])if(!balance.includes(token))throw new Error(`Balanced capacity missing: ${token}`);
           const sw=fs.readFileSync('sw.js','utf8');
-          for(const token of ['my-performance-v1.5.16','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','tuesday-therapy-layout.js','post-funding-rebalance.js'])if(!sw.includes(token))throw new Error(`PWA scheduler build incomplete: ${token}`);
+          for(const token of ['my-performance-v1.5.17','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','tuesday-therapy-layout.js','post-funding-rebalance.js'])if(!sw.includes(token))throw new Error(`PWA scheduler build incomplete: ${token}`);
           const version=JSON.parse(fs.readFileSync('version.json','utf8'));
-          if(version.version!=='1.5.16')throw new Error('Server version beacon mismatch');
+          if(version.version!=='1.5.17')throw new Error('Server version beacon mismatch');
           console.log('Runtime, PWA, therapy-first Tuesday, balanced scheduling and Avançar hard dedup guards passed');
           NODE
