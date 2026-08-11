@@ -1,0 +1,14 @@
+const fs=require('fs'),assert=require('assert');
+const sync=fs.readFileSync('cloud-sync-v2.js','utf8');
+const index=fs.readFileSync('index.html','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
+for(const token of ["SDK_VERSION='0.6.2-beta'",'ep-fancy-wave-a6thlzk9.neonauth.us-west-2.aws.neon.tech/neondb/auth','ep-fancy-wave-a6thlzk9.apirest.us-west-2.aws.neon.tech/neondb/rest/v1','client.auth.signIn.email','client.auth.signUp.email','my_performance_pull','my_performance_push','Sem sessão Neon'])assert(sync.includes(token),`Neon sync v2 missing: ${token}`);
+assert(!sync.includes('0.6.3-beta'),'unpublished neon-js 0.6.3-beta must not be referenced');
+assert(index.includes('cloud-sync-v2.js'),'new Neon runtime must be loaded');
+assert(!index.includes('<script src="cloud-sync.js"></script>'),'broken legacy cloud runtime must not be loaded');
+assert(!index.includes('<script src="muay-optional.js"></script>'),'Muay engine must not be loaded');
+assert(index.lastIndexOf('weekly-schedule-v2.js')>index.lastIndexOf('schedule-authority.js'),'weekly schedule v2 must be the final scheduler authority');
+for(const asset of ['cloud-sync-v2.js','weekly-schedule-v2.js'])assert(sw.includes(asset),`service worker must cache ${asset}`);
+assert(!sw.includes("'./cloud-sync.js'"),'service worker must not cache old cloud-sync runtime');
+assert(!sw.includes("'./muay-optional.js'"),'service worker must not cache Muay engine');
+console.log('Neon sync v2 and runtime load-order contracts passed');
