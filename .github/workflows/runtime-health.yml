@@ -28,40 +28,36 @@ jobs:
               exit 1
             fi
           fi
-      - name: Syntax and focused runtime tests
+      - name: Calendar V3 regression suite
         run: |
-          node --check weekly-schedule-v2.js
+          node --check calendar-model-v3.js
+          node --check planner-engine-v3.js
+          node --check calendar-runtime-v3.js
+          node --check calendar-ui-v3.js
           node --check cloud-sync-v2.js
-          node --check recalc-center-fix.js
-          node --check runtime-health.js
           node --check pwa-update.js
-          node --check completion-guard.js
-          node --check discard-day.js
           node --check sw.js
-          node tests/weekly-schedule-v2.test.js
+          node tests/calendar-v3.test.js
           node tests/cloud-sync-v2.test.js
-          node tests/adaptive-fairness.test.js
-          node tests/discard-day.test.js
           node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
-      - name: Guard final runtime composition
+      - name: Guard single planner architecture
         run: |
           node <<'NODE'
           const fs=require('fs');
           const index=fs.readFileSync('index.html','utf8');
-          for(const token of ['data-build="1.5.21"','cloud-sync-v2.js','weekly-schedule-v2.js','completion-guard.js','schedule-authority.js'])if(!index.includes(token))throw new Error(`HTML runtime marker missing: ${token}`);
-          if(index.includes('<script src="cloud-sync.js"></script>'))throw new Error('Legacy cloud sync must not load');
-          if(index.includes('<script src="muay-optional.js"></script>'))throw new Error('Muay engine must not load');
-          if(index.lastIndexOf('weekly-schedule-v2.js')<index.lastIndexOf('schedule-authority.js'))throw new Error('Weekly Schedule V2 must load last');
-          const weekly=fs.readFileSync('weekly-schedule-v2.js','utf8');
-          for(const token of ["delete state.routineSettings.gymStart","delete state.routineSettings.muayDays","g.title='Academia — Perna'","add(p,g,720,810","add(p,sh,810,840","personal-therapy-weekly","STUDY_MIN=180","renderToday=renderTodayV2"])if(!weekly.includes(token))throw new Error(`Final schedule invariant missing: ${token}`);
-          if(weekly.includes('BASE_RENDER_TODAY()'))throw new Error('Final renderer must not invoke the legacy Today renderer');
-          const cloud=fs.readFileSync('cloud-sync-v2.js','utf8');
-          for(const token of ["SDK_VERSION='0.6.2-beta'",'client.auth.signIn.email','client.auth.signUp.email','my_performance_pull','my_performance_push'])if(!cloud.includes(token))throw new Error(`Neon sync invariant missing: ${token}`);
-          if(cloud.includes('0.6.3-beta'))throw new Error('Unpublished Neon SDK version reintroduced');
-          const health=fs.readFileSync('runtime-health.js','utf8');if(!health.includes("dataset.build||'1.5.21'"))throw new Error('Runtime badge version mismatch');
-          const sw=fs.readFileSync('sw.js','utf8');for(const token of ["BUILD='1.5.21'","CACHE='my-performance-v1.5.21'",'cloud-sync-v2.js','weekly-schedule-v2.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA build incomplete: ${token}`);
+          if(!index.includes('data-build="2.0.0"'))throw new Error('Shell must be v2.0.0');
+          for(const token of ['calendar-model-v3.js','planner-engine-v3.js','calendar-ui-v3.js','cloud-sync-v2.js'])if(!index.includes(token))throw new Error(`Calendar runtime marker missing: ${token}`);
+          const forbidden=['routine.js','muay-optional.js','adaptive-engine.js','adaptive-fairness.js','runtime-hooks.js','day-controls.js','weekend-protection.js','capacity-budget.js','balanced-capacity.js','funding-strategy-2026.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','scheduler-2.js','live-capacity.js','recalc-center-fix.js','time-aware-core.js','time-aware-capacity.js','late-wake-policy.js','discard-day.js','schedule-authority.js','weekly-schedule-v2.js'];
+          for(const asset of forbidden)if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Legacy scheduling layer reintroduced: ${asset}`);
+          const model=fs.readFileSync('calendar-model-v3.js','utf8');
+          for(const token of ["{id:'GSA'","{id:'Estudos'","{id:'Pessoal'",'campaign-hacktown-2026','campaign-eva-launch','campaign-editais','specialCommitment:true','delete state.routineSettings.gymStart'])if(!model.includes(token))throw new Error(`Model invariant missing: ${token}`);
+          const engine=fs.readFileSync('planner-engine-v3.js','utf8');
+          for(const token of ['Planner Engine V3','function allocate','function workItems','function fixedSlots','function discardDay','deadline','window.MyPerformanceRoutine={planDay'])if(!engine.includes(token))throw new Error(`Engine invariant missing: ${token}`);
+          const ui=fs.readFileSync('calendar-ui-v3.js','utf8');
+          for(const token of ['JANELA DE CAPACIDADE','COMPROMISSOS ESPECIAIS','Pacotes de Main Quests','Importar Campanha','Não fiz','Descartar dia'])if(!ui.includes(token))throw new Error(`UI invariant missing: ${token}`);
+          const sw=fs.readFileSync('sw.js','utf8');for(const token of ["BUILD='2.0.0'","CACHE='my-performance-v2.0.0'",'calendar-model-v3.js','planner-engine-v3.js','calendar-ui-v3.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA build incomplete: ${token}`);
           if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('Service worker must only delete My Performance caches');
-          const version=JSON.parse(fs.readFileSync('version.json','utf8'));if(version.version!=='1.5.21')throw new Error('Server version beacon mismatch');
-          console.log('v1.5.21 final runtime composition passed');
+          const version=JSON.parse(fs.readFileSync('version.json','utf8'));if(version.version!=='2.0.0')throw new Error('Server version beacon mismatch');
+          console.log('My Performance 2.0 single-planner architecture passed');
           NODE
