@@ -23,21 +23,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Validate My Performance 2.0 runtime
+      - name: Validate My Performance 2.0.2 bounded-memory runtime
         run: |
           node --check app.js
           node --check scheduler-core.js
           node --check planner.js
           node --check calendar-model-v3.js
           node --check campaign-policy-v3.js
-          node --check planner-engine-v3.js
+          node --check planner-engine-v4.js
           node --check calendar-runtime-v3.js
           node --check cloud-sync-v2.js
           node --check notifications.js
           node --check pwa-update.js
           node --check calendar-ui-v3.js
+          node --check runtime-stability-v4.js
           node --check sw.js
-          node tests/calendar-v3.test.js
+          node tests/calendar-v4-functional.test.js
+          node --max-old-space-size=64 tests/planner-v4-stress.test.js
           node tests/cloud-sync-v2.test.js
           node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
