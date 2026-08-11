@@ -1,0 +1,11 @@
+"use strict";
+/* Calendar V5 planner policy adapter. Supplies policy data to the single Planner; it never creates or moves slots itself. */
+(function(){
+  const B=window.MyPerformanceCalendarModel,D=window.MyPerformanceCalendarDomain;if(!B||!D)return;
+  const basePref=typeof B.prefFor==='function'?B.prefFor.bind(B):()=>null;
+  B.prefFor=function(q,date){const m=D.sideMeta?.(q?.id);if(m?.preferredStart){const mm=String(m.preferredStart).match(/^(\d{1,2}):(\d{2})$/);if(mm){const start=Number(mm[1])*60+Number(mm[2]),len=Math.max(5,Number(m.idealSessionMin||q?.durationMin||30));return[start,start+len,'preferência configurada']}}return basePref(q,date)};
+  const baseWindows=D.windowsForWeekday.bind(D);
+  D.windowsForWeekday=function(wd){return baseWindows(wd).map(w=>{const x=JSON.parse(JSON.stringify(w)),original=[...(x.groups||[])];x.displayGroups=original;if(x.zoneFree){x.groups=['__ZONE_FREE__'];x.allowSideQuests=false;x.sideQuestDedicated=false;x.emergencyOnly=false;x.plannerPolicy='zone-free-emergency-only'}else if(x.emergencyOnly||x.optional){x.groups=['__EMERGENCY__'];x.allowSideQuests=false;x.sideQuestDedicated=false;x.emergencyOnly=false;x.plannerPolicy='extension-emergency-only'}return x})};
+  window.addEventListener('my-performance-view-rendered',()=>{if(state?.view!=='today')return;const p=window.MyPerformancePlannerEngine?.planDay?.(state.plannerDate||today());if(!p)return;document.querySelectorAll('.window-band').forEach((band,i)=>{const w=p.windows?.[i],small=band.querySelector('.window-rail small');if(w?.displayGroups?.length&&small)small.textContent=w.displayGroups.join(' + ');if(w?.plannerPolicy==='zone-free-emergency-only'){const policy=band.querySelector('.window-policy');if(policy&&!policy.querySelector('[data-zone-free-policy]'))policy.insertAdjacentHTML('beforeend','<span class="pill" data-zone-free-policy>não preencher automaticamente</span>')}if(w?.plannerPolicy==='extension-emergency-only'){const policy=band.querySelector('.window-policy');if(policy&&!policy.querySelector('[data-emergency-policy]'))policy.insertAdjacentHTML('beforeend','<span class="pill red" data-emergency-policy>somente emergência</span>')}})});
+  window.MyPerformanceCalendarPlannerPolicy={VERSION:5};
+})();
