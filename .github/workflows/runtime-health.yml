@@ -46,20 +46,21 @@ jobs:
         run: |
           node <<'NODE'
           const fs=require('fs');
+          const version=JSON.parse(fs.readFileSync('version.json','utf8')).version;
           const index=fs.readFileSync('index.html','utf8');
-          if(!index.includes('data-build="2.0.0"'))throw new Error('Shell must be v2.0.0');
+          if(!index.includes(`data-build="${version}"`))throw new Error(`Shell must match ${version}`);
           for(const token of ['calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v3.js','calendar-ui-v3.js','cloud-sync-v2.js'])if(!index.includes(token))throw new Error(`Calendar runtime marker missing: ${token}`);
           const forbidden=['routine.js','muay-optional.js','adaptive-engine.js','adaptive-fairness.js','runtime-hooks.js','day-controls.js','weekend-protection.js','capacity-budget.js','balanced-capacity.js','funding-strategy-2026.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','scheduler-2.js','live-capacity.js','recalc-center-fix.js','time-aware-core.js','time-aware-capacity.js','late-wake-policy.js','discard-day.js','schedule-authority.js','weekly-schedule-v2.js'];
           for(const asset of forbidden)if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Legacy scheduling layer reintroduced: ${asset}`);
           const model=fs.readFileSync('calendar-model-v3.js','utf8');
           for(const token of ["{id:'GSA'","{id:'Estudos'","{id:'Pessoal'",'campaign-hacktown-2026','campaign-eva-launch','campaign-editais','specialCommitment:true','delete state.routineSettings.gymStart'])if(!model.includes(token))throw new Error(`Model invariant missing: ${token}`);
-          const policy=fs.readFileSync('campaign-policy-v3.js','utf8');if(!policy.includes("q.dueDate=''" )||!policy.includes('campaignContainer=true'))throw new Error('Generic Editais campaign cannot own a fictitious deadline');
+          const policy=fs.readFileSync('campaign-policy-v3.js','utf8');for(const token of ["edital.dueDate=''",'campaignContainer=true','PREFERENCE_ONLY','calendarPreferenceOnly:true','calendarBuffer:true'])if(!policy.includes(token))throw new Error(`Policy invariant missing: ${token}`);
           const engine=fs.readFileSync('planner-engine-v3.js','utf8');
           for(const token of ['Planner Engine V3','function allocate','function workItems','function fixedSlots','function discardDay','deadline','window.MyPerformanceRoutine={planDay'])if(!engine.includes(token))throw new Error(`Engine invariant missing: ${token}`);
           const ui=fs.readFileSync('calendar-ui-v3.js','utf8');
           for(const token of ['JANELA DE CAPACIDADE','COMPROMISSOS ESPECIAIS','Pacotes de Main Quests','Importar Campanha','Não fiz','Descartar dia'])if(!ui.includes(token))throw new Error(`UI invariant missing: ${token}`);
-          const sw=fs.readFileSync('sw.js','utf8');for(const token of ["BUILD='2.0.0'","CACHE='my-performance-v2.0.0'",'calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v3.js','calendar-ui-v3.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA build incomplete: ${token}`);
+          const runtime=fs.readFileSync('calendar-runtime-v3.js','utf8');if(!runtime.includes('document.documentElement.dataset.build'))throw new Error('Visible build label must use shell build');
+          const sw=fs.readFileSync('sw.js','utf8');for(const token of [`BUILD='${version}'`,`CACHE='my-performance-v${version}'`,'calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v3.js','calendar-ui-v3.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA build incomplete: ${token}`);
           if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('Service worker must only delete My Performance caches');
-          const version=JSON.parse(fs.readFileSync('version.json','utf8'));if(version.version!=='2.0.0')throw new Error('Server version beacon mismatch');
-          console.log('My Performance 2.0 single-planner architecture passed');
+          console.log(`My Performance ${version} single-planner architecture passed`);
           NODE
