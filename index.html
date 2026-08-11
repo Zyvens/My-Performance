@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" data-build="1.5.21">
+<html lang="pt-BR" data-build="2.0.0">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#07130f">
-<meta name="description" content="My Performance — RPG pessoal de metas, hábitos, carreira, estudos e GSA.">
+<meta name="description" content="My Performance — calendário inteligente gamificado de campanhas, missões e evolução pessoal.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="My Performance">
@@ -18,65 +18,46 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="planner.css">
-<link rel="stylesheet" href="routine.css">
-<link rel="stylesheet" href="adaptive.css">
 <link rel="stylesheet" href="narrator.css">
-<link rel="stylesheet" href="day-controls.css">
-<link rel="stylesheet" href="capacity-budget.css">
-<link rel="stylesheet" href="scheduler-2.css">
-<link rel="stylesheet" href="modal-overlay-fix.css">
-<title>My Performance — Life RPG</title>
+<link rel="stylesheet" href="calendar-v3.css">
+<title>My Performance — Calendar RPG</title>
 </head>
 <body>
 <div class="app-shell">
   <header class="topbar">
-    <div class="brand"><div class="logo">MP</div><div><div class="eyebrow">LIFE RPG</div><h1>My Performance</h1></div></div>
+    <div class="brand"><div class="logo">MP</div><div><div class="eyebrow">CALENDAR RPG</div><h1>My Performance</h1></div></div>
     <div class="top-actions"><button class="btn" id="installBtn" hidden>Instalar</button><button class="btn primary" id="quickAdd">+ Missão</button></div>
   </header>
   <section id="hud" class="hud"></section>
   <nav class="nav" id="topNav">
-    <button data-view="dashboard" class="active">Dashboard</button><button data-view="today">Hoje</button><button data-view="quests">Quests</button><button data-view="agenda">Agenda</button><button data-view="timeline">Calendário / Gantt</button><button data-view="player">Player</button><button data-view="rewards">Recompensas</button><button data-view="config">Config</button>
+    <button data-view="dashboard" class="active">Dashboard</button><button data-view="today">Hoje</button><button data-view="quests">Missões</button><button data-view="agenda">Calendário</button><button data-view="timeline">Prazos / Gantt</button><button data-view="player">Player</button><button data-view="rewards">Recompensas</button><button data-view="config">Config</button>
   </nav>
   <main id="view"></main>
 </div>
 <nav class="bottom-nav">
-  <button data-view="dashboard" class="active"><b>⌂</b>Início</button><button data-view="today"><b>◷</b>Hoje</button><button data-view="quests"><b>☷</b>Quests</button><button data-view="agenda"><b>▦</b>Agenda</button><button data-view="timeline"><b>▤</b>Gantt</button><button data-view="player"><b>♜</b>Player</button><button data-view="config"><b>⚙</b>Config</button>
+  <button data-view="dashboard" class="active"><b>⌂</b>Início</button><button data-view="today"><b>◷</b>Hoje</button><button data-view="quests"><b>☷</b>Missões</button><button data-view="agenda"><b>▦</b>Calendário</button><button data-view="timeline"><b>▤</b>Prazos</button><button data-view="player"><b>♜</b>Player</button><button data-view="config"><b>⚙</b>Config</button>
 </nav>
 <div class="toast" id="toast"></div>
 <div id="modal"></div>
+
+<!-- Base game / mission catalog -->
 <script src="data.js"></script>
 <script src="routine-data.js"></script>
-<script src="fixed-commitments.js"></script>
 <script src="app.js"></script>
 <script src="scheduler-core.js"></script>
-<script src="cloud-sync-v2.js"></script>
 <script src="planner.js"></script>
-<script src="routine.js"></script>
-<script src="adaptive-engine.js"></script>
-<script src="adaptive-fairness.js"></script>
-<script src="runtime-hooks.js"></script>
+
+<!-- My Performance 2.0: one calendar model + one planner engine -->
+<script src="calendar-model-v3.js"></script>
+<script src="planner-engine-v3.js"></script>
+<script src="calendar-runtime-v3.js"></script>
+
+<!-- Services that consume the single planner -->
+<script src="cloud-sync-v2.js"></script>
 <script src="notifications.js"></script>
-<script src="narrator.js"></script>
-<script src="day-controls.js"></script>
-<script src="weekend-protection.js"></script>
-<script src="capacity-budget.js"></script>
-<script src="balanced-capacity.js"></script>
-<script src="funding-strategy-2026.js"></script>
-<script src="post-funding-rebalance.js"></script>
-<script src="canonical-week-template.js"></script>
-<script src="canonical-week-policy.js"></script>
-<script src="scheduler-2.js"></script>
-<script src="mobile-nav-fix.js"></script>
-<script src="live-capacity.js"></script>
 <script src="pwa-update.js"></script>
-<script src="recalc-center-fix.js"></script>
-<script src="time-aware-core.js"></script>
-<script src="time-aware-capacity.js"></script>
-<script src="late-wake-policy.js"></script>
-<script src="discard-day.js"></script>
-<script src="runtime-health.js"></script>
-<script src="completion-guard.js"></script>
-<script src="schedule-authority.js"></script>
-<script src="weekly-schedule-v2.js"></script>
+
+<!-- Final UI authority; no legacy scheduler is loaded after this point -->
+<script src="calendar-ui-v3.js"></script>
 </body>
 </html>
