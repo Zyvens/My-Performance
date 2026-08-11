@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Validate My Performance 2.1.0 Calendar V5 runtime
+      - name: Validate My Performance 2.1.1 strategic Calendar V5 runtime
         run: |
           node --check app.js
           node --check scheduler-core.js
@@ -34,6 +34,7 @@ jobs:
           node --check calendar-domain-v5.js
           node --check calendar-persistence-v5.js
           node --check calendar-planner-policy-v5.js
+          node --check planner-dependency-v5.js
           node --check planner-engine-v5.js
           node --check calendar-actions-v5.js
           node --check calendar-runtime-v3.js
@@ -43,9 +44,11 @@ jobs:
           node --check calendar-ui-v5.js
           node --check calendar-advanced-v5.js
           node --check calendar-dragdrop-v5.js
+          node --check calendar-strategic-v5.js
           node --check runtime-stability-v5.js
           node --check sw.js
           node tests/calendar-v5-functional.test.js
+          node tests/calendar-v5-strategic.test.js
           node --max-old-space-size=64 tests/planner-v5-stress.test.js
           node tests/calendar-v5-ui-contract.test.js
           node tests/cloud-sync-v2.test.js
