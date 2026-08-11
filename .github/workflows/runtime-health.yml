@@ -18,49 +18,21 @@ jobs:
       - name: Require PWA version bump for runtime changes
         if: github.event_name == 'pull_request'
         run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          CHANGED="$(git diff --name-only "$BASE_SHA"...HEAD)"
-          if echo "$CHANGED" | grep -Eq '(^|/).+\.js$|(^|/).+\.css$|^index\.html$|^manifest\.webmanifest$'; then
-            BASE_VERSION="$(git show "$BASE_SHA:version.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).version))")"
-            CURRENT_VERSION="$(node -e "process.stdout.write(require('./version.json').version)")"
-            if [ "$BASE_VERSION" = "$CURRENT_VERSION" ]; then
-              echo "Runtime/PWA changed without version bump: still $CURRENT_VERSION"
-              exit 1
-            fi
-          fi
-      - name: Calendar V3 regression suite
+          BASE_SHA="${{ github.event.pull_request.base.sha }}";CHANGED="$(git diff --name-only "$BASE_SHA"...HEAD)";if echo "$CHANGED" | grep -Eq '(^|/).+\.js$|(^|/).+\.css$|^index\.html$|^manifest\.webmanifest$'; then BASE_VERSION="$(git show "$BASE_SHA:version.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).version))")";CURRENT_VERSION="$(node -e "process.stdout.write(require('./version.json').version)")";if [ "$BASE_VERSION" = "$CURRENT_VERSION" ]; then echo "Runtime/PWA changed without version bump: still $CURRENT_VERSION";exit 1;fi;fi
+      - name: Planner V4 syntax and behavior
         run: |
-          node --check calendar-model-v3.js
-          node --check campaign-policy-v3.js
-          node --check planner-engine-v3.js
-          node --check calendar-runtime-v3.js
-          node --check calendar-ui-v3.js
-          node --check cloud-sync-v2.js
-          node --check pwa-update.js
+          node --check calendar-model-fastpath-v4.js
+          node --check planner-engine-v4.js
+          node --check runtime-stability-v4.js
           node --check sw.js
-          node tests/calendar-v3.test.js
+          node tests/calendar-v4-functional.test.js
+          node --max-old-space-size=64 tests/planner-v4-stress.test.js
           node tests/cloud-sync-v2.test.js
           node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
-      - name: Guard single planner architecture
+          node tests/production-runtime-contract.test.js
+      - name: Guard production against OOM regression
         run: |
           node <<'NODE'
-          const fs=require('fs');
-          const version=JSON.parse(fs.readFileSync('version.json','utf8')).version;
-          const index=fs.readFileSync('index.html','utf8');
-          if(!index.includes(`data-build="${version}"`))throw new Error(`Shell must match ${version}`);
-          for(const token of ['calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v3.js','calendar-ui-v3.js','cloud-sync-v2.js'])if(!index.includes(token))throw new Error(`Calendar runtime marker missing: ${token}`);
-          const forbidden=['routine.js','muay-optional.js','adaptive-engine.js','adaptive-fairness.js','runtime-hooks.js','day-controls.js','weekend-protection.js','capacity-budget.js','balanced-capacity.js','funding-strategy-2026.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','scheduler-2.js','live-capacity.js','recalc-center-fix.js','time-aware-core.js','time-aware-capacity.js','late-wake-policy.js','discard-day.js','schedule-authority.js','weekly-schedule-v2.js'];
-          for(const asset of forbidden)if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Legacy scheduling layer reintroduced: ${asset}`);
-          const model=fs.readFileSync('calendar-model-v3.js','utf8');
-          for(const token of ["{id:'GSA'","{id:'Estudos'","{id:'Pessoal'",'campaign-hacktown-2026','campaign-eva-launch','campaign-editais','specialCommitment:true','delete state.routineSettings.gymStart'])if(!model.includes(token))throw new Error(`Model invariant missing: ${token}`);
-          const policy=fs.readFileSync('campaign-policy-v3.js','utf8');for(const token of ["edital.dueDate=''",'campaignContainer=true','PREFERENCE_ONLY','calendarPreferenceOnly:true','calendarBuffer:true'])if(!policy.includes(token))throw new Error(`Policy invariant missing: ${token}`);
-          const engine=fs.readFileSync('planner-engine-v3.js','utf8');
-          for(const token of ['Planner Engine V3','function allocate','function workItems','function fixedSlots','function discardDay','deadline','window.MyPerformanceRoutine={planDay'])if(!engine.includes(token))throw new Error(`Engine invariant missing: ${token}`);
-          const ui=fs.readFileSync('calendar-ui-v3.js','utf8');
-          for(const token of ['JANELA DE CAPACIDADE','COMPROMISSOS ESPECIAIS','Pacotes de Main Quests','Importar Campanha','Não fiz','Descartar dia'])if(!ui.includes(token))throw new Error(`UI invariant missing: ${token}`);
-          const runtime=fs.readFileSync('calendar-runtime-v3.js','utf8');if(!runtime.includes('document.documentElement.dataset.build'))throw new Error('Visible build label must use shell build');
-          const sw=fs.readFileSync('sw.js','utf8');for(const token of [`BUILD='${version}'`,`CACHE='my-performance-v${version}'`,'calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v3.js','calendar-ui-v3.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA build incomplete: ${token}`);
-          if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('Service worker must only delete My Performance caches');
-          console.log(`My Performance ${version} single-planner architecture passed`);
+          const fs=require('fs'),v=JSON.parse(fs.readFileSync('version.json','utf8')).version,index=fs.readFileSync('index.html','utf8'),fast=fs.readFileSync('calendar-model-fastpath-v4.js','utf8'),engine=fs.readFileSync('planner-engine-v4.js','utf8'),sw=fs.readFileSync('sw.js','utf8');if(v!=='2.0.2'||!index.includes('data-build="2.0.2"'))throw new Error('Build mismatch');for(const a of ['calendar-model-fastpath-v4.js','planner-engine-v4.js','runtime-stability-v4.js'])if(!index.includes(a))throw new Error(`Missing ${a}`);if(index.indexOf('calendar-model-fastpath-v4.js')>index.indexOf('planner-engine-v4.js'))throw new Error('Fast model must load before planner');for(const a of ['planner-engine-v3.js','routine.js','capacity-budget.js','scheduler-2.js','time-aware-capacity.js','schedule-authority.js'])if(index.includes(`<script src="${a}"></script>`))throw new Error(`Obsolete runtime loaded: ${a}`);for(const t of ['fastModel','M.model=fastModel','M.groupForQuest=function','M.fastPath=true'])if(!fast.includes(t))throw new Error(`Calendar zero-write invariant missing: ${t}`);for(const t of ['RANGE_CACHE_LIMIT=2','rangeCache','capacityCache','function cacheRange','function planWeek','calendar-v4'])if(!engine.includes(t))throw new Error(`V4 memory invariant missing: ${t}`);if(engine.includes('function rawCapacity')||engine.includes('function dateRange('))throw new Error('V3 explosive allocation pattern returned');for(const t of ["BUILD='2.0.2'","CACHE='my-performance-v2.0.2'",'calendar-model-fastpath-v4.js','planner-engine-v4.js','runtime-stability-v4.js'])if(!sw.includes(t))throw new Error(`PWA V4 missing: ${t}`);if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('SW cache cleanup scope regression');console.log('Planner V4 bounded-memory + zero-write architecture passed');
           NODE

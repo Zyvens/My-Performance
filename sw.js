@@ -1,19 +1,8 @@
-const BUILD='2.0.1';
-const CACHE='my-performance-v2.0.1';
-const ASSETS=['./','./index.html','./styles.css','./planner.css','./narrator.css','./calendar-v3.css','./data.js','./routine-data.js','./app.js','./scheduler-core.js','./planner.js','./calendar-model-v3.js','./campaign-policy-v3.js','./planner-engine-v3.js','./calendar-runtime-v3.js','./cloud-sync-v2.js','./notifications.js','./pwa-update.js','./calendar-ui-v3.js','./version.json','./manifest.webmanifest','./icon.svg'];
+const BUILD='2.0.2';
+const CACHE='my-performance-v2.0.2';
+const ASSETS=['./','./index.html','./styles.css','./planner.css','./narrator.css','./calendar-v3.css','./data.js','./routine-data.js','./app.js','./scheduler-core.js','./planner.js','./calendar-model-v3.js','./campaign-policy-v3.js','./calendar-model-fastpath-v4.js','./planner-engine-v4.js','./calendar-runtime-v3.js','./cloud-sync-v2.js','./notifications.js','./pwa-update.js','./calendar-ui-v3.js','./runtime-stability-v4.js','./version.json','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',event=>event.waitUntil((async()=>{
-  const keys=await caches.keys();
-  await Promise.all(keys.filter(key=>key.startsWith('my-performance-')&&key!==CACHE).map(key=>caches.delete(key)));
-  await self.clients.claim();
-  const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
-  await Promise.all(windows.map(async client=>{
-    try{
-      const u=new URL(client.url);if(u.origin!==self.location.origin)return;if(u.searchParams.get('_mpv')===BUILD)return;
-      u.searchParams.set('_mpv',BUILD);u.searchParams.set('_mpr',Date.now().toString());await client.navigate(u.toString())
-    }catch{}
-  }))
-})()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(key=>key.startsWith('my-performance-')&&key!==CACHE).map(key=>caches.delete(key)));await self.clients.claim();const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});await Promise.all(windows.map(async client=>{try{const u=new URL(client.url);if(u.origin!==self.location.origin)return;if(u.searchParams.get('_mpv')===BUILD)return;u.searchParams.set('_mpv',BUILD);u.searchParams.set('_mpr',Date.now().toString());await client.navigate(u.toString())}catch{}}))})()));
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;const isVersion=url.pathname.endsWith('/version.json');if(isVersion){event.respondWith(fetch(event.request,{cache:'no-store'}).catch(()=>caches.match('./version.json')));return}event.respondWith(fetch(event.request,{cache:'no-store'}).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});return response}).catch(()=>caches.match(event.request).then(found=>found||((event.request.mode==='navigate')?caches.match('./index.html'):undefined))));});
 self.addEventListener('push',event=>{let data={};try{data=event.data?event.data.json():{}}catch(e){data={body:event.data?event.data.text():'Nova missão disponível.'}}const title=data.title||'⚔ My Performance · missão atual';event.waitUntil(self.registration.showNotification(title,{body:data.body||'Abra o calendário para ver sua missão atual.',tag:data.tag||'my-performance-push',renotify:true,requireInteraction:true,icon:'./icon.svg',badge:'./icon.svg',vibrate:[180,90,180,90,300],data:{url:data.url||'./?view=today',questId:data.questId||''},actions:[{action:'open',title:'Abrir calendário'}]}));});
