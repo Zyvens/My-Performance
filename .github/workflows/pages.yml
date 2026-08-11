@@ -23,25 +23,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Validate critical JavaScript
+      - name: Validate My Performance 2.0 runtime
         run: |
           node --check app.js
           node --check scheduler-core.js
-          node --check scheduler-2.js
-          node --check live-capacity.js
-          node --check time-aware-core.js
-          node --check time-aware-capacity.js
-          node --check late-wake-policy.js
-          node --check funding-strategy-2026.js
-          node --check recalc-center-fix.js
-          node --check runtime-health.js
+          node --check planner.js
+          node --check calendar-model-v3.js
+          node --check campaign-policy-v3.js
+          node --check planner-engine-v3.js
+          node --check calendar-runtime-v3.js
+          node --check cloud-sync-v2.js
+          node --check notifications.js
           node --check pwa-update.js
+          node --check calendar-ui-v3.js
           node --check sw.js
-          node tests/scheduler2.test.js
-          node tests/live-capacity.test.js
-          node tests/time-aware-core.test.js
-          node tests/late-wake-policy.test.js
-          node tests/funding-strategy-2026.test.js
+          node tests/calendar-v3.test.js
+          node tests/cloud-sync-v2.test.js
+          node tests/pwa-runtime-refresh.test.js
+          node tests/version-bump-policy.test.js
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact

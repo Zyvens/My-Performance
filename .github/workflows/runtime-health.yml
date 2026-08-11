@@ -28,73 +28,38 @@ jobs:
               exit 1
             fi
           fi
-      - name: Syntax and scheduler tests
+      - name: Calendar V3 regression suite
         run: |
-          node --check recalc-center-fix.js
-          node --check runtime-health.js
+          node --check calendar-model-v3.js
+          node --check campaign-policy-v3.js
+          node --check planner-engine-v3.js
+          node --check calendar-runtime-v3.js
+          node --check calendar-ui-v3.js
+          node --check cloud-sync-v2.js
           node --check pwa-update.js
-          node --check time-aware-capacity.js
-          node --check late-wake-policy.js
-          node --check funding-strategy-2026.js
-          node --check post-funding-rebalance.js
-          node --check completion-guard.js
-          node --check discard-day.js
-          node --check fixed-commitments.js
-          node --check adaptive-fairness.js
-          node --check balanced-capacity.js
-          node --check canonical-week-template.js
-          node --check canonical-week-policy.js
-          node --check schedule-authority.js
           node --check sw.js
-          node tests/scheduler2.test.js
-          node tests/live-capacity.test.js
-          node tests/time-aware-core.test.js
-          node tests/late-wake-policy.test.js
-          node tests/funding-strategy-2026.test.js
-          node tests/discard-day.test.js
-          node tests/fixed-commitments.test.js
-          node tests/adaptive-fairness.test.js
-          node tests/balanced-capacity.test.js
-          node tests/canonical-week-template.test.js
-          node tests/canonical-week-load-order.test.js
-          node tests/schedule-authority.test.js
+          node tests/calendar-v3.test.js
+          node tests/cloud-sync-v2.test.js
           node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
-      - name: Guard against known runtime regressions
+      - name: Guard single planner architecture
         run: |
           node <<'NODE'
           const fs=require('fs');
-          const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
-          if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: recursive MutationObserver');
           const index=fs.readFileSync('index.html','utf8');
-          for(const token of ['data-build="1.5.20"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','schedule-authority.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
-          if(index.indexOf('schedule-authority.js')<index.indexOf('completion-guard.js'))throw new Error('Schedule authority must load after every previous scheduler/render wrapper');
-          if(index.includes('tuesday-therapy-layout.js'))throw new Error('Superseded Tuesday-only scheduler must not be loaded');
-          const health=fs.readFileSync('runtime-health.js','utf8');
-          if(!health.includes("document.documentElement.dataset.build||'1.5.20'"))throw new Error('Runtime badge must read shell build');
-          const completion=fs.readFileSync('completion-guard.js','utf8');
-          for(const token of ['markManual','recordCompletion','unlockChecks','[data-toggle][disabled]','dependencyStatus(q).missing'])if(!completion.includes(token))throw new Error(`Manual completion authority missing: ${token}`);
-          if(completion.includes("toast('Quest bloqueada por dependência')"))throw new Error('Manual completion must never be blocked by dependencies');
-          const discard=fs.readFileSync('discard-day.js','utf8');
-          for(const token of ['Descartar dia','discardedDays','pendingRelevant','deferAdaptive','rescheduledFromDiscard','completedQuestIds'])if(!discard.includes(token))throw new Error(`Discard day behavior missing: ${token}`);
-          const fixed=fs.readFileSync('fixed-commitments.js','utf8');
-          for(const token of ["title:'Terapia'","weekdays:[2]","timeStart:'08:00'","timeEnd:'08:30'","commuteOutMin:60","commuteReturnMin:30","title:'Célula Zion Brave'","weekdays:[4]"])if(!fixed.includes(token))throw new Error(`Canonical fixed commitment missing: ${token}`);
-          const fairness=fs.readFileSync('adaptive-fairness.js','utf8');
-          for(const token of ['Hard rule: NEVER reuse parentId+date','hardDedup:true','fairnessLate','Adaptive fairness invariant violated'])if(!fairness.includes(token))throw new Error(`Adaptive hard dedup missing: ${token}`);
-          const balance=fs.readFileSync('balanced-capacity.js','utf8');
-          for(const token of ['STUDY_MIN=180','GSA_SOFT_TARGET=480','capacityStudyProtected','3h'])if(!balance.includes(token))throw new Error(`Three-hour balanced capacity missing: ${token}`);
-          const canonical=fs.readFileSync('canonical-week-template.js','utf8');
-          for(const token of ["2:{wake:360,end:1350,therapy:true,gym:[720,810,'Perna']","3:{wake:270,end:1350,bni:true","4:{wake:360,end:1410","study:[[900,1080]]","5:{wake:360,end:1200","study:[[960,1140]]","6:{wake:360,end:780","study:[[540,720]]","domingo protegido para descanso"])if(!canonical.includes(token))throw new Error(`Canonical week invariant missing: ${token}`);
-          const policy=fs.readFileSync('canonical-week-policy.js','utf8');
-          for(const token of ['STUDY_MIN=180','WORKOUT_TARGET=6','capacity.workoutTarget=WORKOUT_TARGET'])if(!policy.includes(token))throw new Error(`Canonical week policy missing: ${token}`);
-          const authority=fs.readFileSync('schedule-authority.js','utf8');
-          for(const token of ["personal-therapy-weekly","gsa-bni-weekly","personal-zion-brave-weekly","STUDY_MIN=180","repairMandatory","renderToday=renderTodayAuthority","canonicalMandatory:true"])if(!authority.includes(token))throw new Error(`Mandatory schedule authority missing: ${token}`);
-          const update=fs.readFileSync('pwa-update.js','utf8');
-          for(const token of ['controllerchange','cacheBust','await applyUpdate(reg,remote.version)','Atualizando agora'])if(!update.includes(token))throw new Error(`Automatic PWA refresh missing: ${token}`);
-          const sw=fs.readFileSync('sw.js','utf8');
-          for(const token of ["BUILD='1.5.20'","CACHE='my-performance-v1.5.20'",'canonical-week-template.js','canonical-week-policy.js','schedule-authority.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA forced-refresh build incomplete: ${token}`);
+          if(!index.includes('data-build="2.0.0"'))throw new Error('Shell must be v2.0.0');
+          for(const token of ['calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v3.js','calendar-ui-v3.js','cloud-sync-v2.js'])if(!index.includes(token))throw new Error(`Calendar runtime marker missing: ${token}`);
+          const forbidden=['routine.js','muay-optional.js','adaptive-engine.js','adaptive-fairness.js','runtime-hooks.js','day-controls.js','weekend-protection.js','capacity-budget.js','balanced-capacity.js','funding-strategy-2026.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','scheduler-2.js','live-capacity.js','recalc-center-fix.js','time-aware-core.js','time-aware-capacity.js','late-wake-policy.js','discard-day.js','schedule-authority.js','weekly-schedule-v2.js'];
+          for(const asset of forbidden)if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Legacy scheduling layer reintroduced: ${asset}`);
+          const model=fs.readFileSync('calendar-model-v3.js','utf8');
+          for(const token of ["{id:'GSA'","{id:'Estudos'","{id:'Pessoal'",'campaign-hacktown-2026','campaign-eva-launch','campaign-editais','specialCommitment:true','delete state.routineSettings.gymStart'])if(!model.includes(token))throw new Error(`Model invariant missing: ${token}`);
+          const policy=fs.readFileSync('campaign-policy-v3.js','utf8');if(!policy.includes("q.dueDate=''" )||!policy.includes('campaignContainer=true'))throw new Error('Generic Editais campaign cannot own a fictitious deadline');
+          const engine=fs.readFileSync('planner-engine-v3.js','utf8');
+          for(const token of ['Planner Engine V3','function allocate','function workItems','function fixedSlots','function discardDay','deadline','window.MyPerformanceRoutine={planDay'])if(!engine.includes(token))throw new Error(`Engine invariant missing: ${token}`);
+          const ui=fs.readFileSync('calendar-ui-v3.js','utf8');
+          for(const token of ['JANELA DE CAPACIDADE','COMPROMISSOS ESPECIAIS','Pacotes de Main Quests','Importar Campanha','Não fiz','Descartar dia'])if(!ui.includes(token))throw new Error(`UI invariant missing: ${token}`);
+          const sw=fs.readFileSync('sw.js','utf8');for(const token of ["BUILD='2.0.0'","CACHE='my-performance-v2.0.0'",'calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v3.js','calendar-ui-v3.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA build incomplete: ${token}`);
           if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('Service worker must only delete My Performance caches');
-          const version=JSON.parse(fs.readFileSync('version.json','utf8'));
-          if(version.version!=='1.5.20')throw new Error('Server version beacon mismatch');
-          console.log('Runtime, forced PWA refresh and mandatory schedule authority guards passed');
+          const version=JSON.parse(fs.readFileSync('version.json','utf8'));if(version.version!=='2.0.0')throw new Error('Server version beacon mismatch');
+          console.log('My Performance 2.0 single-planner architecture passed');
           NODE
