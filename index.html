@@ -25,21 +25,13 @@
 </head>
 <body>
 <div class="app-shell">
-  <header class="topbar">
-    <div class="brand"><div class="logo">MP</div><div><div class="eyebrow">CALENDAR RPG</div><h1>My Performance</h1></div></div>
-    <div class="top-actions"><button class="btn" id="installBtn" hidden>Instalar</button><button class="btn primary" id="quickAdd">+ Missão</button></div>
-  </header>
+  <header class="topbar"><div class="brand"><div class="logo">MP</div><div><div class="eyebrow">CALENDAR RPG</div><h1>My Performance</h1></div></div><div class="top-actions"><button class="btn" id="installBtn" hidden>Instalar</button><button class="btn primary" id="quickAdd">+ Missão</button></div></header>
   <section id="hud" class="hud"></section>
-  <nav class="nav" id="topNav">
-    <button data-view="dashboard" class="active">Dashboard</button><button data-view="today">Hoje</button><button data-view="quests">Missões</button><button data-view="agenda">Calendário</button><button data-view="timeline">Prazos / Gantt</button><button data-view="player">Player</button><button data-view="rewards">Recompensas</button><button data-view="config">Config</button>
-  </nav>
+  <nav class="nav" id="topNav"><button data-view="dashboard" class="active">Dashboard</button><button data-view="today">Hoje</button><button data-view="quests">Missões</button><button data-view="agenda">Calendário</button><button data-view="timeline">Prazos / Gantt</button><button data-view="player">Player</button><button data-view="rewards">Recompensas</button><button data-view="config">Config</button></nav>
   <main id="view"></main>
 </div>
-<nav class="bottom-nav">
-  <button data-view="dashboard" class="active"><b>⌂</b>Início</button><button data-view="today"><b>◷</b>Hoje</button><button data-view="quests"><b>☷</b>Missões</button><button data-view="agenda"><b>▦</b>Calendário</button><button data-view="timeline"><b>▤</b>Prazos</button><button data-view="player"><b>♜</b>Player</button><button data-view="config"><b>⚙</b>Config</button>
-</nav>
-<div class="toast" id="toast"></div>
-<div id="modal"></div>
+<nav class="bottom-nav"><button data-view="dashboard" class="active"><b>⌂</b>Início</button><button data-view="today"><b>◷</b>Hoje</button><button data-view="quests"><b>☷</b>Missões</button><button data-view="agenda"><b>▦</b>Calendário</button><button data-view="timeline"><b>▤</b>Prazos</button><button data-view="player"><b>♜</b>Player</button><button data-view="config"><b>⚙</b>Config</button></nav>
+<div class="toast" id="toast"></div><div id="modal"></div>
 <script src="data.js"></script>
 <script src="routine-data.js"></script>
 <script src="app.js"></script>
@@ -49,6 +41,7 @@
 <script src="campaign-policy-v3.js"></script>
 <script src="calendar-model-fastpath-v4.js"></script>
 <script src="calendar-domain-v5.js"></script>
+<script src="calendar-persistence-v5.js"></script>
 <script src="planner-engine-v5.js"></script>
 <script src="calendar-actions-v5.js"></script>
 <script src="calendar-runtime-v3.js"></script>
@@ -58,5 +51,4 @@
 <script src="calendar-ui-v5.js"></script>
 <script src="calendar-advanced-v5.js"></script>
 <script src="runtime-stability-v5.js"></script>
-</body>
-</html>
+</body></html>
