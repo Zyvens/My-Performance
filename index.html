@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" data-build="2.0.0">
+<html lang="pt-BR" data-build="2.0.1">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -39,26 +39,18 @@
 </nav>
 <div class="toast" id="toast"></div>
 <div id="modal"></div>
-
-<!-- Base game / mission catalog -->
 <script src="data.js"></script>
 <script src="routine-data.js"></script>
 <script src="app.js"></script>
 <script src="scheduler-core.js"></script>
 <script src="planner.js"></script>
-
-<!-- My Performance 2.0: one calendar model + one planner engine -->
 <script src="calendar-model-v3.js"></script>
 <script src="campaign-policy-v3.js"></script>
 <script src="planner-engine-v3.js"></script>
 <script src="calendar-runtime-v3.js"></script>
-
-<!-- Services that consume the single planner -->
 <script src="cloud-sync-v2.js"></script>
 <script src="notifications.js"></script>
 <script src="pwa-update.js"></script>
-
-<!-- Final UI authority; no legacy scheduler is loaded after this point -->
 <script src="calendar-ui-v3.js"></script>
 </body>
 </html>

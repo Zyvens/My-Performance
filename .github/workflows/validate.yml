@@ -54,9 +54,9 @@ jobs:
           if(index.lastIndexOf('calendar-ui-v3.js')<index.lastIndexOf('planner-engine-v3.js'))throw new Error('Calendar UI must render from Planner Engine V3');
           const model=fs.readFileSync('calendar-model-v3.js','utf8'),policy=fs.readFileSync('campaign-policy-v3.js','utf8'),engine=fs.readFileSync('planner-engine-v3.js','utf8'),ui=fs.readFileSync('calendar-ui-v3.js','utf8');
           for(const token of ['campaign-hacktown-2026','campaign-eva-launch','campaign-editais','delete state.routineSettings.gymStart','specialCommitment:true','immovable:true'])if(!model.includes(token))throw new Error(`Calendar model contract missing: ${token}`);
-          if(!policy.includes("q.dueDate=''" )||!policy.includes('campaignContainer=true'))throw new Error('Generic Editais campaign must not carry a fictitious deadline');
+          for(const token of ["edital.dueDate=''",'campaignContainer=true','PREFERENCE_ONLY','calendarPreferenceOnly:true','calendarBuffer:true'])if(!policy.includes(token))throw new Error(`Campaign/preference policy missing: ${token}`);
           for(const token of ['function workItems','function allocate','function discardDay','function skipSlot','Main Quest ocupou Side Quest','window.MyPerformancePlannerEngine'])if(!engine.includes(token))throw new Error(`Planner engine contract missing: ${token}`);
           for(const token of ['Calendário semanal','Pacotes de Main Quests','Importar Campanha','Descartar dia','renderTodayV3','renderConfigV3'])if(!ui.includes(token))throw new Error(`Calendar UI contract missing: ${token}`);
-          const version=JSON.parse(fs.readFileSync('version.json','utf8'));if(version.version!=='2.0.0')throw new Error('Expected v2.0.0');
+          const version=JSON.parse(fs.readFileSync('version.json','utf8'));if(!/^2\.0\./.test(version.version))throw new Error(`Expected My Performance 2.0.x, got ${version.version}`);
           console.log(`Validated ${qs.length} missions and My Performance ${version.version} calendar runtime`);
           NODE
