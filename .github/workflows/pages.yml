@@ -23,41 +23,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Validate My Performance 2.2.0 strict-group Calendar V5 runtime
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate My Performance 2.3.0 daily rollover runtime
         run: |
-          node --check app.js
-          node --check scheduler-core.js
-          node --check planner.js
-          node --check calendar-model-v3.js
-          node --check campaign-policy-v3.js
-          node --check calendar-model-fastpath-v4.js
-          node --check calendar-domain-v5.js
-          node --check calendar-persistence-v5.js
-          node --check calendar-planner-policy-v5.js
-          node --check planner-dependency-v5.js
-          node --check sidequest-quality-v5.js
-          node --check planner-engine-v5.js
-          node --check planner-group-integrity-v5.js
-          node --check day-frame-v5.js
-          node --check opportunistic-sidequests-v5.js
-          node --check calendar-actions-v5.js
-          node --check calendar-runtime-v3.js
-          node --check cloud-sync-v2.js
-          node --check notifications.js
-          node --check pwa-update.js
-          node --check calendar-ui-v5.js
-          node --check modal-ui-fix-v5.js
-          node --check mission-context-v5.js
-          node --check calendar-advanced-v5.js
-          node --check calendar-dragdrop-v5.js
-          node --check calendar-strategic-v5.js
-          node --check runtime-stability-v5.js
-          node --check sw.js
+          for f in sp-clock-v6.js quest-audit-v6.js quest-milestones-v6.js planner-engine-v5.js planner-group-integrity-v5.js day-frame-v5.js mission-context-v5.js daily-review-v6.js sw.js; do node --check "$f"; done
           node tests/calendar-v5-functional.test.js
           node tests/calendar-v5-routine-context.test.js
           node tests/opportunistic-sidequests.test.js
           node tests/modal-ui-v5.test.js
           node tests/calendar-v5-strategic.test.js
+          node tests/quest-audit-v6.test.js
+          node tests/daily-review-v6.test.js
           node --max-old-space-size=64 tests/planner-v5-stress.test.js
           node tests/calendar-v5-ui-contract.test.js
           node tests/cloud-sync-v2.test.js

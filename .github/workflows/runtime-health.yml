@@ -19,40 +19,24 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           BASE_SHA="${{ github.event.pull_request.base.sha }}";CHANGED="$(git diff --name-only "$BASE_SHA"...HEAD)";if echo "$CHANGED" | grep -Eq '(^|/).+\.js$|(^|/).+\.css$|^index\.html$|^manifest\.webmanifest$'; then BASE_VERSION="$(git show "$BASE_SHA:version.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).version))")";CURRENT_VERSION="$(node -e "process.stdout.write(require('./version.json').version)")";if [ "$BASE_VERSION" = "$CURRENT_VERSION" ]; then echo "Runtime/PWA changed without version bump: still $CURRENT_VERSION";exit 1;fi;fi
-      - name: Planner V5 syntax and behavior
+      - name: Syntax and behavioral regression
         run: |
-          node --check calendar-model-fastpath-v4.js
-          node --check calendar-domain-v5.js
-          node --check calendar-persistence-v5.js
-          node --check calendar-planner-policy-v5.js
-          node --check planner-dependency-v5.js
-          node --check sidequest-quality-v5.js
-          node --check planner-engine-v5.js
-          node --check planner-group-integrity-v5.js
-          node --check day-frame-v5.js
-          node --check opportunistic-sidequests-v5.js
-          node --check calendar-actions-v5.js
-          node --check calendar-ui-v5.js
-          node --check modal-ui-fix-v5.js
-          node --check mission-context-v5.js
-          node --check calendar-advanced-v5.js
-          node --check calendar-dragdrop-v5.js
-          node --check calendar-strategic-v5.js
-          node --check runtime-stability-v5.js
-          node --check sw.js
+          for f in sp-clock-v6.js quest-audit-v6.js quest-milestones-v6.js planner-engine-v5.js planner-group-integrity-v5.js day-frame-v5.js mission-context-v5.js daily-review-v6.js sw.js; do node --check "$f"; done
           node tests/calendar-v5-functional.test.js
           node tests/calendar-v5-routine-context.test.js
           node tests/opportunistic-sidequests.test.js
           node tests/modal-ui-v5.test.js
           node tests/calendar-v5-strategic.test.js
+          node tests/quest-audit-v6.test.js
+          node tests/daily-review-v6.test.js
           node --max-old-space-size=64 tests/planner-v5-stress.test.js
           node tests/calendar-v5-ui-contract.test.js
           node tests/cloud-sync-v2.test.js
           node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
           node tests/production-runtime-contract.test.js
-      - name: Guard strict-group single-Planner architecture
+      - name: Guard single-Planner + Sao Paulo rollover architecture
         run: |
           node <<'NODE'
-          const fs=require('fs'),v=JSON.parse(fs.readFileSync('version.json','utf8')).version,index=fs.readFileSync('index.html','utf8'),quality=fs.readFileSync('sidequest-quality-v5.js','utf8'),engine=fs.readFileSync('planner-engine-v5.js','utf8'),integrity=fs.readFileSync('planner-group-integrity-v5.js','utf8'),frame=fs.readFileSync('day-frame-v5.js','utf8'),opp=fs.readFileSync('opportunistic-sidequests-v5.js','utf8'),modal=fs.readFileSync('modal-ui-fix-v5.js','utf8'),context=fs.readFileSync('mission-context-v5.js','utf8'),css=fs.readFileSync('calendar-v5.css','utf8'),sw=fs.readFileSync('sw.js','utf8');if(v!=='2.2.0'||!index.includes('data-build="2.2.0"'))throw new Error('Build mismatch');for(const a of ['sidequest-quality-v5.js','planner-engine-v5.js','planner-group-integrity-v5.js','day-frame-v5.js','opportunistic-sidequests-v5.js','calendar-ui-v5.js','modal-ui-fix-v5.js','mission-context-v5.js'])if(!index.includes(a))throw new Error(`Missing ${a}`);if(index.indexOf('sidequest-quality-v5.js')>index.indexOf('planner-engine-v5.js'))throw new Error('Quality policy order regression');if(index.indexOf('planner-engine-v5.js')>index.indexOf('planner-group-integrity-v5.js'))throw new Error('Group integrity order regression');if(index.indexOf('planner-group-integrity-v5.js')>index.indexOf('day-frame-v5.js'))throw new Error('Day frame order regression');if(index.indexOf('day-frame-v5.js')>index.indexOf('opportunistic-sidequests-v5.js'))throw new Error('Opportunistic adapter order regression');if(index.indexOf('calendar-ui-v5.js')>index.indexOf('modal-ui-fix-v5.js'))throw new Error('Modal enhancer order regression');if(index.indexOf('modal-ui-fix-v5.js')>index.indexOf('mission-context-v5.js'))throw new Error('Mission context order regression');for(const a of ['planner-engine-v4.js','calendar-ui-v3.js','runtime-stability-v4.js','routine.js','capacity-budget.js','scheduler-2.js','time-aware-capacity.js','schedule-authority.js'])if(index.includes(`<script src="${a}"></script>`))throw new Error(`Obsolete runtime loaded: ${a}`);for(const t of ['opportunistic-v1','isOpportunistic','return-900','rigidity===\'free\''])if(!quality.includes(t))throw new Error(`Opportunistic quality invariant missing: ${t}`);for(const t of ['RANGE_CACHE_LIMIT=2','rangeCache','dayCapCache',"p.engine='calendar-v5'",'SQ.scoreBonus'])if(!engine.includes(t))throw new Error(`Planner invariant missing: ${t}`);for(const t of ['strictSideQuestDedicated','ROUTE_PREFIX','__BLOCKED_DEPENDENCY__'])if(!integrity.includes(t))throw new Error(`Group integrity invariant missing: ${t}`);for(const t of ['wakeNow','extendDay','system-late-wake','daySleepAnchor'])if(!frame.includes(t))throw new Error(`Day frame invariant missing: ${t}`);for(const t of ['autoIgnored','outsideCalendar:visible','Side Quest oportunística sem espaço'])if(!opp.includes(t))throw new Error(`Opportunistic adapter missing: ${t}`);for(const t of ['MutationObserver','modal-open','color-value','aria-modal'])if(!modal.includes(t))throw new Error(`Modal enhancer missing: ${t}`);for(const t of ['sqGroup','sqWindows','sqDurationMode','mission-fragment-progress','Congelar'])if(!context.includes(t))throw new Error(`Mission context missing: ${t}`);for(const t of ['.modal-backdrop{position:fixed','.setting-toggle{display:grid','color-value-code','mission-strategy-desc','day-frame-controls'])if(!css.includes(t))throw new Error(`Calendar CSS missing: ${t}`);for(const t of ["BUILD='2.2.0'","CACHE='my-performance-v2.2.0'",'sidequest-quality-v5.js','planner-group-integrity-v5.js','day-frame-v5.js','opportunistic-sidequests-v5.js','modal-ui-fix-v5.js','mission-context-v5.js'])if(!sw.includes(t))throw new Error(`PWA asset missing: ${t}`);if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('SW cache cleanup scope regression');console.log('Strict-group Calendar V5 2.2.0 architecture passed');
+          const fs=require('fs'),v=JSON.parse(fs.readFileSync('version.json','utf8')).version,index=fs.readFileSync('index.html','utf8'),clock=fs.readFileSync('sp-clock-v6.js','utf8'),audit=fs.readFileSync('quest-audit-v6.js','utf8'),review=fs.readFileSync('daily-review-v6.js','utf8'),sw=fs.readFileSync('sw.js','utf8');if(v!=='2.3.0'||!index.includes('data-build="2.3.0"'))throw new Error('Build mismatch');for(const a of ['sp-clock-v6.js','quest-audit-v6.js','quest-milestones-v6.js','planner-engine-v5.js','planner-group-integrity-v5.js','day-frame-v5.js','calendar-ui-v5.js','mission-context-v5.js','daily-review-v6.js'])if(!index.includes(a))throw new Error(`Missing ${a}`);for(const old of ['planner-engine-v4.js','calendar-ui-v3.js','routine.js','capacity-budget.js','scheduler-2.js','late-wake-policy.js','schedule-authority.js'])if(index.includes(`<script src="${old}"></script>`))throw new Error(`Obsolete runtime loaded: ${old}`);for(const t of ['America/Sao_Paulo','todaySP','minutesNow'])if(!clock.includes(t))throw new Error(`Clock invariant missing ${t}`);for(const t of ['campaign-transpetro-2026','campaign-gsa-operacao-2026','pack-study-practice','pack-professional-development','pack-gsa-cadence'])if(!audit.includes(t))throw new Error(`Audit invariant missing ${t}`);for(const t of ['reviewedThroughDate','Tarefas passadas / atrasadas','Revisar cronograma','EM ATRASO','carryoverMain','reviewGate'])if(!review.includes(t))throw new Error(`Daily review invariant missing ${t}`);for(const t of ["BUILD='2.3.0'","CACHE='my-performance-v2.3.0'",'sp-clock-v6.js','quest-audit-v6.js','daily-review-v6.js','daily-review-v6.css'])if(!sw.includes(t))throw new Error(`PWA asset missing ${t}`);console.log('My Performance 2.3.0 rollover architecture passed');
           NODE
