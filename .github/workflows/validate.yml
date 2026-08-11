@@ -13,61 +13,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check loaded JavaScript syntax
+      - name: Check production JavaScript syntax
         run: |
           node --check data.js
           node --check routine-data.js
-          node --check fixed-commitments.js
           node --check app.js
           node --check scheduler-core.js
-          node --check cloud-sync-v2.js
           node --check planner.js
-          node --check routine.js
-          node --check adaptive-engine.js
-          node --check adaptive-fairness.js
-          node --check runtime-hooks.js
+          node --check calendar-model-v3.js
+          node --check planner-engine-v3.js
+          node --check calendar-runtime-v3.js
+          node --check cloud-sync-v2.js
           node --check notifications.js
-          node --check narrator.js
-          node --check day-controls.js
-          node --check weekend-protection.js
-          node --check capacity-budget.js
-          node --check balanced-capacity.js
-          node --check funding-strategy-2026.js
-          node --check post-funding-rebalance.js
-          node --check canonical-week-template.js
-          node --check canonical-week-policy.js
-          node --check scheduler-2.js
-          node --check mobile-nav-fix.js
-          node --check live-capacity.js
           node --check pwa-update.js
-          node --check recalc-center-fix.js
-          node --check time-aware-core.js
-          node --check time-aware-capacity.js
-          node --check late-wake-policy.js
-          node --check discard-day.js
-          node --check runtime-health.js
-          node --check completion-guard.js
-          node --check schedule-authority.js
-          node --check weekly-schedule-v2.js
+          node --check calendar-ui-v3.js
           node --check sw.js
-      - name: Core scheduler regression suite
+      - name: Calendar-first behavioral tests
         run: |
-          node tests/scheduler2.test.js
-          node tests/live-capacity.test.js
-          node tests/time-aware-core.test.js
-          node tests/late-wake-policy.test.js
-          node tests/funding-strategy-2026.test.js
-          node tests/discard-day.test.js
-          node tests/fixed-commitments.test.js
-          node tests/adaptive-fairness.test.js
-          node tests/balanced-capacity.test.js
-          node tests/canonical-week-template.test.js
-          node tests/schedule-authority.test.js
-          node tests/pwa-runtime-refresh.test.js
-          node tests/weekly-schedule-v2.test.js
+          node tests/calendar-v3.test.js
           node tests/cloud-sync-v2.test.js
+          node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
-      - name: Validate quest catalog and final runtime authority
+      - name: Validate mission catalog and runtime composition
         run: |
           node <<'NODE'
           const fs=require('fs'),vm=require('vm');
@@ -75,17 +42,19 @@ jobs:
           vm.runInContext(fs.readFileSync('data.js','utf8'),ctx);
           vm.runInContext(fs.readFileSync('routine-data.js','utf8'),ctx);
           const qs=ctx.QUEST_SEED;
-          if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 quests after routine layer, got ${qs?.length}`);
-          const ids=new Set();for(const q of qs){if(!q.id||!q.title)throw new Error('Quest without id/title');if(ids.has(q.id))throw new Error(`Duplicate quest id: ${q.id}`);ids.add(q.id)}
+          if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 seed missions, got ${qs?.length}`);
+          const ids=new Set();for(const q of qs){if(!q.id||!q.title)throw new Error('Mission without id/title');if(ids.has(q.id))throw new Error(`Duplicate mission id: ${q.id}`);ids.add(q.id)}
           const broken=[];for(const q of qs)for(const d of q.dependencies||[])if(!ids.has(d))broken.push(`${q.id} -> ${d}`);if(broken.length)throw new Error(`Broken dependencies: ${broken.join(', ')}`);
           const index=fs.readFileSync('index.html','utf8');
-          if(!index.includes('cloud-sync-v2.js')||index.includes('<script src="cloud-sync.js"></script>'))throw new Error('Only Neon sync v2 may be loaded');
-          if(index.includes('<script src="muay-optional.js"></script>'))throw new Error('Muay engine must not be loaded');
-          if(index.lastIndexOf('weekly-schedule-v2.js')<index.lastIndexOf('schedule-authority.js'))throw new Error('Weekly schedule v2 must be final scheduler authority');
-          const weekly=fs.readFileSync('weekly-schedule-v2.js','utf8');
-          for(const token of ["g.title='Academia — Perna'","add(p,g,720,810","add(p,sh,810,840","personal-therapy-weekly","gsa-bni-weekly","personal-zion-brave-weekly","delete state.routineSettings.gymStart","disabled:true","STUDY_MIN=180"])if(!weekly.includes(token))throw new Error(`Weekly schedule v2 contract missing: ${token}`);
-          const cloud=fs.readFileSync('cloud-sync-v2.js','utf8');
-          if(!cloud.includes("SDK_VERSION='0.6.2-beta'")||cloud.includes('0.6.3-beta'))throw new Error('Neon SDK version mismatch');
-          const sw=fs.readFileSync('sw.js','utf8');for(const asset of ['cloud-sync-v2.js','weekly-schedule-v2.js'])if(!sw.includes(asset))throw new Error(`Missing PWA asset: ${asset}`);
-          console.log(`Validated ${qs.length} quests and final v1.5.21 runtime authority`);
+          const loaded=['data.js','routine-data.js','app.js','scheduler-core.js','planner.js','calendar-model-v3.js','planner-engine-v3.js','calendar-runtime-v3.js','cloud-sync-v2.js','notifications.js','pwa-update.js','calendar-ui-v3.js'];
+          for(const asset of loaded)if(!index.includes(`<script src="${asset}"></script>`))throw new Error(`Production asset missing: ${asset}`);
+          const forbidden=['routine.js','muay-optional.js','adaptive-engine.js','adaptive-fairness.js','runtime-hooks.js','day-controls.js','weekend-protection.js','capacity-budget.js','balanced-capacity.js','funding-strategy-2026.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','scheduler-2.js','live-capacity.js','recalc-center-fix.js','time-aware-core.js','time-aware-capacity.js','late-wake-policy.js','discard-day.js','schedule-authority.js','weekly-schedule-v2.js'];
+          for(const asset of forbidden)if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Legacy scheduler still loaded: ${asset}`);
+          if(index.lastIndexOf('calendar-ui-v3.js')<index.lastIndexOf('planner-engine-v3.js'))throw new Error('Calendar UI must render from Planner Engine V3');
+          const model=fs.readFileSync('calendar-model-v3.js','utf8'),engine=fs.readFileSync('planner-engine-v3.js','utf8'),ui=fs.readFileSync('calendar-ui-v3.js','utf8');
+          for(const token of ['campaign-hacktown-2026','campaign-eva-launch','campaign-editais','delete state.routineSettings.gymStart','specialCommitment:true','immovable:true'])if(!model.includes(token))throw new Error(`Calendar model contract missing: ${token}`);
+          for(const token of ['function workItems','function allocate','function discardDay','function skipSlot','Main Quest ocupou Side Quest','window.MyPerformancePlannerEngine'])if(!engine.includes(token))throw new Error(`Planner engine contract missing: ${token}`);
+          for(const token of ['Calendário semanal','Pacotes de Main Quests','Importar Campanha','Descartar dia','renderTodayV3','renderConfigV3'])if(!ui.includes(token))throw new Error(`Calendar UI contract missing: ${token}`);
+          const version=JSON.parse(fs.readFileSync('version.json','utf8'));if(version.version!=='2.0.0')throw new Error('Expected v2.0.0');
+          console.log(`Validated ${qs.length} missions and My Performance ${version.version} calendar runtime`);
           NODE
