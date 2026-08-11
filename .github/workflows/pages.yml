@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Validate My Performance 2.1.3 opportunistic Calendar V5 runtime
+      - name: Validate My Performance 2.1.4 modal-stable Calendar V5 runtime
         run: |
           node --check app.js
           node --check scheduler-core.js
@@ -44,6 +44,7 @@ jobs:
           node --check notifications.js
           node --check pwa-update.js
           node --check calendar-ui-v5.js
+          node --check modal-ui-fix-v5.js
           node --check calendar-advanced-v5.js
           node --check calendar-dragdrop-v5.js
           node --check calendar-strategic-v5.js
@@ -51,6 +52,7 @@ jobs:
           node --check sw.js
           node tests/calendar-v5-functional.test.js
           node tests/opportunistic-sidequests.test.js
+          node tests/modal-ui-v5.test.js
           node tests/calendar-v5-strategic.test.js
           node --max-old-space-size=64 tests/planner-v5-stress.test.js
           node tests/calendar-v5-ui-contract.test.js
