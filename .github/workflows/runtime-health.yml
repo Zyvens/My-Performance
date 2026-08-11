@@ -54,6 +54,7 @@ jobs:
           node tests/adaptive-fairness.test.js
           node tests/balanced-capacity.test.js
           node tests/tuesday-therapy-layout.test.js
+          node tests/version-bump-policy.test.js
       - name: Guard against known runtime regressions
         run: |
           node <<'NODE'
