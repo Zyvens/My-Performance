@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert');
+const css=fs.readFileSync('calendar-v5.css','utf8'),js=fs.readFileSync('modal-ui-fix-v5.js','utf8'),index=fs.readFileSync('index.html','utf8'),sw=fs.readFileSync('sw.js','utf8'),version=require('../version.json');
+assert.strictEqual(version.version,'2.1.4');
+assert(index.includes('data-build="2.1.4"'));
+assert(index.includes('<script src="modal-ui-fix-v5.js"></script>'));
+assert(index.indexOf('calendar-ui-v5.js')<index.indexOf('modal-ui-fix-v5.js'),'modal enhancer must load after Calendar UI');
+for(const token of ['.modal-backdrop{position:fixed','place-items:center','max-height:min(92dvh,900px)','body.modal-open{overflow:hidden}','.setting-toggle{display:grid','input[type="color"]','color-value-code'])assert(css.includes(token),`modal CSS missing ${token}`);
+for(const token of ['MutationObserver','modal-open','input[type="color"]','color-value','aria-modal','Escape','preventScroll'])assert(js.includes(token),`modal enhancer missing ${token}`);
+assert(sw.includes("BUILD='2.1.4'"));assert(sw.includes("CACHE='my-performance-v2.1.4'"));assert(sw.includes('./modal-ui-fix-v5.js'));
+console.log('Calendar V5 modal layout/color regression passed');
