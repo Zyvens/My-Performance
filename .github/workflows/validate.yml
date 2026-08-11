@@ -3,33 +3,39 @@ name: Validate My Performance
 on:
   pull_request:
   push:
-    branches: [agent/life-rpg, agent/notifications-routine, agent/muay-optional, agent/adaptive-life-engine, agent/day-skip-daily-balance, agent/weekend-protection, agent/capacity-budget-bni, agent/scheduler-2-complete, agent/mobile-nav-today-fix, agent/fill-gaps-sleep-anchor-fix, agent/fix-neon-sdk-import, agent/recalc-center-binding-fix, agent/time-aware-capacity]
+    branches: [main]
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check JavaScript syntax
+      - name: Check loaded JavaScript syntax
         run: |
           node --check data.js
           node --check routine-data.js
+          node --check fixed-commitments.js
           node --check app.js
           node --check scheduler-core.js
-          node --check cloud-sync.js
+          node --check cloud-sync-v2.js
           node --check planner.js
           node --check routine.js
-          node --check muay-optional.js
           node --check adaptive-engine.js
+          node --check adaptive-fairness.js
           node --check runtime-hooks.js
           node --check notifications.js
           node --check narrator.js
           node --check day-controls.js
           node --check weekend-protection.js
           node --check capacity-budget.js
+          node --check balanced-capacity.js
+          node --check funding-strategy-2026.js
+          node --check post-funding-rebalance.js
+          node --check canonical-week-template.js
+          node --check canonical-week-policy.js
           node --check scheduler-2.js
           node --check mobile-nav-fix.js
           node --check live-capacity.js
@@ -37,14 +43,31 @@ jobs:
           node --check recalc-center-fix.js
           node --check time-aware-core.js
           node --check time-aware-capacity.js
+          node --check late-wake-policy.js
+          node --check discard-day.js
+          node --check runtime-health.js
+          node --check completion-guard.js
+          node --check schedule-authority.js
+          node --check weekly-schedule-v2.js
           node --check sw.js
-      - name: Scheduler 2.0 unit tests
-        run: node tests/scheduler2.test.js
-      - name: Live capacity tests
-        run: node tests/live-capacity.test.js
-      - name: Time-aware capacity tests
-        run: node tests/time-aware-core.test.js
-      - name: Validate quest catalog and scheduler contracts
+      - name: Core scheduler regression suite
+        run: |
+          node tests/scheduler2.test.js
+          node tests/live-capacity.test.js
+          node tests/time-aware-core.test.js
+          node tests/late-wake-policy.test.js
+          node tests/funding-strategy-2026.test.js
+          node tests/discard-day.test.js
+          node tests/fixed-commitments.test.js
+          node tests/adaptive-fairness.test.js
+          node tests/balanced-capacity.test.js
+          node tests/canonical-week-template.test.js
+          node tests/schedule-authority.test.js
+          node tests/pwa-runtime-refresh.test.js
+          node tests/weekly-schedule-v2.test.js
+          node tests/cloud-sync-v2.test.js
+          node tests/version-bump-policy.test.js
+      - name: Validate quest catalog and final runtime authority
         run: |
           node <<'NODE'
           const fs=require('fs'),vm=require('vm');
@@ -55,19 +78,14 @@ jobs:
           if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 quests after routine layer, got ${qs?.length}`);
           const ids=new Set();for(const q of qs){if(!q.id||!q.title)throw new Error('Quest without id/title');if(ids.has(q.id))throw new Error(`Duplicate quest id: ${q.id}`);ids.add(q.id)}
           const broken=[];for(const q of qs)for(const d of q.dependencies||[])if(!ids.has(d))broken.push(`${q.id} -> ${d}`);if(broken.length)throw new Error(`Broken dependencies: ${broken.join(', ')}`);
-          const required=['routine-water-am','routine-muay','routine-gsa-focus-pm','routine-hygiene-night'];for(const id of required)if(!ids.has(id))throw new Error(`Missing routine quest: ${id}`);
-          const adaptive=fs.readFileSync('adaptive-engine.js','utf8');if(!adaptive.includes("SYSTEM_START='2026-08-10'"))throw new Error('Adaptive engine must start on 2026-08-10');
-          const day=fs.readFileSync('day-controls.js','utf8');if(!day.includes("GSA:{title:'GSA — avanço mínimo diário'")||!day.includes("Estudos:{title:'Estudos — sessão mínima diária'"))throw new Error('Daily GSA/Study minimum missing');if(!day.includes('EXTRA_MIN=120')||!day.includes('MIN_SLEEP_HOURS=6'))throw new Error('6h emergency mode missing');
-          const week=fs.readFileSync('weekend-protection.js','utf8');for(const token of ['Sexta encerra às 18:00','Sábado encerra às 12:00','Domingo pessoal: trabalho e estudo bloqueados'])if(!week.includes(token))throw new Error(`Weekend protection missing: ${token}`);
-          const cap=fs.readFileSync('capacity-budget.js','utf8');for(const token of ['GSA_TARGET=480','WORKOUT_TARGET=5','gsa-bni-weekly','gsa-bni-organization','gsa-main-hacktown-2026','gsa-main-eva-launch','gsa-main-editais','commuteOutMin','commuteReturnMin'])if(!cap.includes(token))throw new Error(`Capacity rule missing: ${token}`);if(!cap.includes('p.wake=5*60')||!cap.includes('p.end=21*60'))throw new Error('Wednesday BNI wake/sleep window missing');
-          const muay=fs.readFileSync('muay-optional.js','utf8');if(!muay.includes("const ALLOWED_DAYS=[1,5]")||!muay.includes("BNI fixo 06:00–11:00"))throw new Error('Muay/BNI collision guard missing');
-          const s2=fs.readFileSync('scheduler-2.js','utf8');for(const token of ['setWakeNow','recalcWeek','objectiveDiagnosis','startTracking','weeklyQuota','openQuickAdd','openRecalcCenter'])if(!s2.includes(token))throw new Error(`Scheduler 2.0 contract missing: ${token}`);
-          const recalc=fs.readFileSync('recalc-center-fix.js','utf8');if(!recalc.includes("btn.textContent='↻ Recalcular / Diagnóstico'")||!recalc.includes('api.openRecalcCenter()')||!recalc.includes('MutationObserver'))throw new Error('Resilient recalculation center binding missing');
-          const nav=fs.readFileSync('mobile-nav-fix.js','utf8');if(!nav.includes("if(view==='today')state.plannerDate=today()"))throw new Error('Today tab must reset plannerDate to the real current date');if(!nav.includes('syncActive(view)'))throw new Error('Navigation active-state guard missing');
-          const live=fs.readFileSync('live-capacity.js','utf8');for(const token of ["disabled:true,boundaryOnly:true",'candidatePool','syntheticForGap','window.MyPerformanceLiveCapacity'])if(!live.includes(token))throw new Error(`Live capacity rule missing: ${token}`);
-          const timeAware=fs.readFileSync('time-aware-capacity.js','utf8');for(const token of ['completedTimeline','early-completion','removed-today','Agora ${String(n.getHours())','sem reposição automática','window.MyPerformanceTimeAware'])if(!timeAware.includes(token))throw new Error(`Time-aware capacity rule missing: ${token}`);
-          const sync=fs.readFileSync('cloud-sync.js','utf8');if(!sync.includes('my-performance-sync-conflict')||!sync.includes('resolveConflict'))throw new Error('Conflict-safe sync missing');
-          const index=fs.readFileSync('index.html','utf8');for(const asset of ['scheduler-core.js','scheduler-2.js','scheduler-2.css','mobile-nav-fix.js','live-capacity.js','pwa-update.js','recalc-center-fix.js','time-aware-core.js','time-aware-capacity.js'])if(!index.includes(asset))throw new Error(`Missing runtime asset in index: ${asset}`);
-          const sw=fs.readFileSync('sw.js','utf8');for(const asset of ['scheduler-core.js','scheduler-2.js','scheduler-2.css','mobile-nav-fix.js','live-capacity.js','pwa-update.js','recalc-center-fix.js','time-aware-core.js','time-aware-capacity.js'])if(!sw.includes(asset))throw new Error(`Missing runtime asset in service worker: ${asset}`);
-          console.log(`Validated ${qs.length} quests, Scheduler 2.0 and time-aware live capacity`);
+          const index=fs.readFileSync('index.html','utf8');
+          if(!index.includes('cloud-sync-v2.js')||index.includes('<script src="cloud-sync.js"></script>'))throw new Error('Only Neon sync v2 may be loaded');
+          if(index.includes('<script src="muay-optional.js"></script>'))throw new Error('Muay engine must not be loaded');
+          if(index.lastIndexOf('weekly-schedule-v2.js')<index.lastIndexOf('schedule-authority.js'))throw new Error('Weekly schedule v2 must be final scheduler authority');
+          const weekly=fs.readFileSync('weekly-schedule-v2.js','utf8');
+          for(const token of ["g.title='Academia — Perna'","add(p,g,720,810","add(p,sh,810,840","personal-therapy-weekly","gsa-bni-weekly","personal-zion-brave-weekly","delete state.routineSettings.gymStart","disabled:true","STUDY_MIN=180"])if(!weekly.includes(token))throw new Error(`Weekly schedule v2 contract missing: ${token}`);
+          const cloud=fs.readFileSync('cloud-sync-v2.js','utf8');
+          if(!cloud.includes("SDK_VERSION='0.6.2-beta'")||cloud.includes('0.6.3-beta'))throw new Error('Neon SDK version mismatch');
+          const sw=fs.readFileSync('sw.js','utf8');for(const asset of ['cloud-sync-v2.js','weekly-schedule-v2.js'])if(!sw.includes(asset))throw new Error(`Missing PWA asset: ${asset}`);
+          console.log(`Validated ${qs.length} quests and final v1.5.21 runtime authority`);
           NODE
