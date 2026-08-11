@@ -1,0 +1,6 @@
+const fs=require('fs'),assert=require('assert');
+const index=fs.readFileSync('index.html','utf8'),engine=fs.readFileSync('planner-engine-v4.js','utf8'),stability=fs.readFileSync('runtime-stability-v4.js','utf8'),version=require('../version.json');
+assert.strictEqual(version.version,'2.0.2');assert(index.includes('data-build="2.0.2"'));assert(index.includes('<script src="planner-engine-v4.js"></script>'));assert(!index.includes('<script src="planner-engine-v3.js"></script>'));
+for(const old of ['routine.js','muay-optional.js','capacity-budget.js','scheduler-2.js','live-capacity.js','time-aware-capacity.js','late-wake-policy.js','schedule-authority.js'])assert(!index.includes(`<script src="${old}"></script>`),`legacy runtime loaded: ${old}`);
+assert(engine.includes('RANGE_CACHE_LIMIT=2'));assert(engine.includes('rangeCache'));assert(engine.includes('capacityCache'));assert(engine.includes('function cacheRange'));assert(engine.includes("engine='calendar-v4'")||engine.includes("p.engine='calendar-v4'"));assert(!engine.includes('function rawCapacity'));assert(!engine.includes('function dateRange('));assert(stability.includes("BUILD='2.0.2'"));
+console.log('Production runtime contract passed');
