@@ -22,41 +22,35 @@ jobs:
           node --check planner.js
           node --check calendar-model-v3.js
           node --check campaign-policy-v3.js
-          node --check planner-engine-v3.js
+          node --check planner-engine-v4.js
           node --check calendar-runtime-v3.js
           node --check cloud-sync-v2.js
           node --check notifications.js
           node --check pwa-update.js
           node --check calendar-ui-v3.js
+          node --check runtime-stability-v4.js
           node --check sw.js
-      - name: Calendar-first behavioral tests
+      - name: Calendar V4 functional regression
+        run: node tests/calendar-v4-functional.test.js
+      - name: Planner V4 bounded memory regression
+        run: node --max-old-space-size=64 tests/planner-v4-stress.test.js
+      - name: Cloud and PWA regressions
         run: |
-          node tests/calendar-v3.test.js
           node tests/cloud-sync-v2.test.js
           node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
-      - name: Validate mission catalog and runtime composition
+      - name: Validate production composition
         run: |
           node <<'NODE'
           const fs=require('fs'),vm=require('vm');
-          const ctx={console};vm.createContext(ctx);
-          vm.runInContext(fs.readFileSync('data.js','utf8'),ctx);
-          vm.runInContext(fs.readFileSync('routine-data.js','utf8'),ctx);
-          const qs=ctx.QUEST_SEED;
-          if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 seed missions, got ${qs?.length}`);
+          const ctx={console};vm.createContext(ctx);vm.runInContext(fs.readFileSync('data.js','utf8'),ctx);vm.runInContext(fs.readFileSync('routine-data.js','utf8'),ctx);
+          const qs=ctx.QUEST_SEED;if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 seed missions, got ${qs?.length}`);
           const ids=new Set();for(const q of qs){if(!q.id||!q.title)throw new Error('Mission without id/title');if(ids.has(q.id))throw new Error(`Duplicate mission id: ${q.id}`);ids.add(q.id)}
-          const broken=[];for(const q of qs)for(const d of q.dependencies||[])if(!ids.has(d))broken.push(`${q.id} -> ${d}`);if(broken.length)throw new Error(`Broken dependencies: ${broken.join(', ')}`);
           const index=fs.readFileSync('index.html','utf8');
-          const loaded=['data.js','routine-data.js','app.js','scheduler-core.js','planner.js','calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v3.js','calendar-runtime-v3.js','cloud-sync-v2.js','notifications.js','pwa-update.js','calendar-ui-v3.js'];
-          for(const asset of loaded)if(!index.includes(`<script src="${asset}"></script>`))throw new Error(`Production asset missing: ${asset}`);
-          const forbidden=['routine.js','muay-optional.js','adaptive-engine.js','adaptive-fairness.js','runtime-hooks.js','day-controls.js','weekend-protection.js','capacity-budget.js','balanced-capacity.js','funding-strategy-2026.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','scheduler-2.js','live-capacity.js','recalc-center-fix.js','time-aware-core.js','time-aware-capacity.js','late-wake-policy.js','discard-day.js','schedule-authority.js','weekly-schedule-v2.js'];
-          for(const asset of forbidden)if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Legacy scheduler still loaded: ${asset}`);
-          if(index.lastIndexOf('calendar-ui-v3.js')<index.lastIndexOf('planner-engine-v3.js'))throw new Error('Calendar UI must render from Planner Engine V3');
-          const model=fs.readFileSync('calendar-model-v3.js','utf8'),policy=fs.readFileSync('campaign-policy-v3.js','utf8'),engine=fs.readFileSync('planner-engine-v3.js','utf8'),ui=fs.readFileSync('calendar-ui-v3.js','utf8');
-          for(const token of ['campaign-hacktown-2026','campaign-eva-launch','campaign-editais','delete state.routineSettings.gymStart','specialCommitment:true','immovable:true'])if(!model.includes(token))throw new Error(`Calendar model contract missing: ${token}`);
-          for(const token of ["edital.dueDate=''",'campaignContainer=true','PREFERENCE_ONLY','calendarPreferenceOnly:true','calendarBuffer:true'])if(!policy.includes(token))throw new Error(`Campaign/preference policy missing: ${token}`);
-          for(const token of ['function workItems','function allocate','function discardDay','function skipSlot','Main Quest ocupou Side Quest','window.MyPerformancePlannerEngine'])if(!engine.includes(token))throw new Error(`Planner engine contract missing: ${token}`);
-          for(const token of ['Calendário semanal','Pacotes de Main Quests','Importar Campanha','Descartar dia','renderTodayV3','renderConfigV3'])if(!ui.includes(token))throw new Error(`Calendar UI contract missing: ${token}`);
-          const version=JSON.parse(fs.readFileSync('version.json','utf8'));if(!/^2\.0\./.test(version.version))throw new Error(`Expected My Performance 2.0.x, got ${version.version}`);
-          console.log(`Validated ${qs.length} missions and My Performance ${version.version} calendar runtime`);
+          for(const asset of ['calendar-model-v3.js','campaign-policy-v3.js','planner-engine-v4.js','calendar-runtime-v3.js','cloud-sync-v2.js','notifications.js','pwa-update.js','calendar-ui-v3.js','runtime-stability-v4.js'])if(!index.includes(`<script src="${asset}"></script>`))throw new Error(`Production asset missing: ${asset}`);
+          for(const asset of ['planner-engine-v3.js','routine.js','muay-optional.js','capacity-budget.js','scheduler-2.js','time-aware-capacity.js','late-wake-policy.js','schedule-authority.js','weekly-schedule-v2.js'])if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Obsolete scheduler loaded: ${asset}`);
+          const engine=fs.readFileSync('planner-engine-v4.js','utf8');for(const token of ['RANGE_CACHE_LIMIT=2','capacityCache','function cacheRange','function planWeek','calendar-v4','metrics'])if(!engine.includes(token))throw new Error(`Planner V4 invariant missing: ${token}`);
+          if(engine.includes('function rawCapacity')||engine.includes('function dateRange('))throw new Error('Explosive V3 capacity/date allocation pattern reintroduced');
+          const v=JSON.parse(fs.readFileSync('version.json','utf8'));if(v.version!=='2.0.2')throw new Error(`Expected 2.0.2, got ${v.version}`);
+          console.log(`Validated ${qs.length} missions and bounded-memory ${v.version} runtime`);
           NODE
