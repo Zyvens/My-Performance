@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const DAY=86400000;
-const ctx={console,Date,JSON,Math,setTimeout:()=>0,clearTimeout:()=>{},CustomEvent:function(type,init){this.type=type;this.detail=init?.detail},window:{dispatchEvent:()=>{}},localStorage:{m:new Map(),getItem(k){return this.m.get(k)||null},setItem(k,v){this.m.set(k,String(v))}},state:{completed:{},xpLedger:{},bonusLedger:{},customQuests:[],overrides:{},questPlans:{}},DOMAIN_META:{Pessoal:{},GSA:{},Estudos:{},Carreira:{}},QUEST_SEED:[]};
+const ctx={console,Date,JSON,Math,setTimeout:()=>0,clearTimeout:()=>{},CustomEvent:function(type,init){this.type=type;this.detail=init?.detail},dispatchEvent:()=>{},localStorage:{m:new Map(),getItem(k){return this.m.get(k)||null},setItem(k,v){this.m.set(k,String(v))}},state:{completed:{},xpLedger:{},bonusLedger:{},customQuests:[],overrides:{},questPlans:{}},DOMAIN_META:{Pessoal:{},GSA:{},Estudos:{},Carreira:{}},QUEST_SEED:[]};
 ctx.globalThis=ctx;ctx.window=ctx;
 ctx.iso=d=>{const x=new Date(d||Date.now());x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 ctx.dfrom=s=>new Date(`${s}T12:00:00`);ctx.today=()=> '2026-08-11';ctx.addDays=(s,n)=>{const d=ctx.dfrom(s);d.setDate(d.getDate()+n);return ctx.iso(d)};ctx.diffDays=(a,b)=>Math.round((ctx.dfrom(b)-ctx.dfrom(a))/DAY);ctx.weekStart=s=>{const d=ctx.dfrom(s),n=(d.getDay()+6)%7;d.setDate(d.getDate()-n);return ctx.iso(d)};
@@ -27,6 +27,7 @@ ctx.scheduled=(q,date)=>{if(q.startDate&&date<q.startDate)return false;const w=c
 ctx.done=()=>false;ctx.hasEverDone=()=>false;
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync('calendar-model-v3.js','utf8'),ctx);
+vm.runInContext(fs.readFileSync('campaign-policy-v3.js','utf8'),ctx);
 vm.runInContext(fs.readFileSync('planner-engine-v3.js','utf8'),ctx);
 const M=ctx.MyPerformanceCalendarModel,E=ctx.MyPerformancePlannerEngine;
 assert(M&&E,'calendar model and planner must load');
@@ -34,6 +35,8 @@ assert.strictEqual(M.model().campaigns.length,3,'three current campaigns must be
 assert.deepStrictEqual(Array.from(M.groups().map(x=>x.id)),['GSA','Estudos','Pessoal']);
 assert.strictEqual(ctx.questById('career-impact').domain,'Pessoal','legacy Carreira group must be removed');
 assert(!('gymStart' in (ctx.state.routineSettings||{})),'global gymStart must not survive migration');
+assert.strictEqual(ctx.questById('gsa-main-editais').campaignContainer,true,'generic Editais mission must be a campaign container, not a deadline');
+assert.strictEqual(ctx.questById('gsa-main-editais').dueDate,'','generic Editais campaign must have no fictitious deadline');
 const tue=E.planDay('2026-08-11');
 const therapy=tue.slots.find(x=>x.q?.id==='personal-therapy-weekly');
 assert(therapy&&therapy.start===480&&therapy.end===510&&therapy.fixed,'Tuesday therapy must be immovable 08:00-08:30');
