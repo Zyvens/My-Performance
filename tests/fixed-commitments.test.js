@@ -17,5 +17,14 @@ assert.strictEqual(therapy.fixedTime,true);
 assert.strictEqual(therapy.essential,true);
 assert.strictEqual(therapy.externalActivity,true);
 assert.strictEqual(therapy.commuteOutMin,60);
-assert.strictEqual(therapy.commuteReturnMin,60);
-console.log('Tuesday therapy fixed commitment passed');
+assert.strictEqual(therapy.commuteReturnMin,30);
+
+const zion=context.QUEST_SEED.find(q=>q.id==='personal-zion-brave-weekly');
+assert(zion,'Thursday Zion Brave commitment must be seeded');
+assert.deepStrictEqual(Array.from(zion.weekdays),[4]);
+assert.strictEqual(zion.timeStart,'19:00');
+assert.strictEqual(zion.timeEnd,'23:00');
+assert.strictEqual(zion.commuteReturnMin,15);
+assert.strictEqual(zion.fixedTime,true);
+assert.strictEqual(zion.essential,true);
+console.log('Fixed therapy and Zion Brave commitments passed');
