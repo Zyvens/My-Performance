@@ -92,7 +92,7 @@ jobs:
           const update=fs.readFileSync('pwa-update.js','utf8');
           for(const token of ['controllerchange','cacheBust','await applyUpdate(reg,remote.version)','Atualizando agora'])if(!update.includes(token))throw new Error(`Automatic PWA refresh missing: ${token}`);
           const sw=fs.readFileSync('sw.js','utf8');
-          for(const token of ["BUILD='1.5.20'",'my-performance-v${BUILD}','canonical-week-template.js','canonical-week-policy.js','schedule-authority.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA forced-refresh build incomplete: ${token}`);
+          for(const token of ["BUILD='1.5.20'","CACHE='my-performance-v1.5.20'",'canonical-week-template.js','canonical-week-policy.js','schedule-authority.js','client.navigate','_mpv'])if(!sw.includes(token))throw new Error(`PWA forced-refresh build incomplete: ${token}`);
           if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('Service worker must only delete My Performance caches');
           const version=JSON.parse(fs.readFileSync('version.json','utf8'));
           if(version.version!=='1.5.20')throw new Error('Server version beacon mismatch');
