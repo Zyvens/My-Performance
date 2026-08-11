@@ -27,7 +27,9 @@ jobs:
           node --check calendar-persistence-v5.js
           node --check calendar-planner-policy-v5.js
           node --check planner-dependency-v5.js
+          node --check sidequest-quality-v5.js
           node --check planner-engine-v5.js
+          node --check opportunistic-sidequests-v5.js
           node --check calendar-actions-v5.js
           node --check calendar-runtime-v3.js
           node --check cloud-sync-v2.js
@@ -41,6 +43,8 @@ jobs:
           node --check sw.js
       - name: Calendar V5 functional regression
         run: node tests/calendar-v5-functional.test.js
+      - name: Opportunistic Side Quest regression
+        run: node tests/opportunistic-sidequests.test.js
       - name: Strategic dependency regression
         run: node tests/calendar-v5-strategic.test.js
       - name: Planner V5 bounded memory and zero-write regression
@@ -57,5 +61,5 @@ jobs:
         run: |
           node <<'NODE'
           const fs=require('fs'),vm=require('vm');const ctx={console};vm.createContext(ctx);vm.runInContext(fs.readFileSync('data.js','utf8'),ctx);vm.runInContext(fs.readFileSync('routine-data.js','utf8'),ctx);const qs=ctx.QUEST_SEED;if(!Array.isArray(qs)||qs.length<120)throw new Error(`Expected >=120 seed missions, got ${qs?.length}`);const ids=new Set();for(const q of qs){if(!q.id||!q.title)throw new Error('Mission without id/title');if(ids.has(q.id))throw new Error(`Duplicate mission id: ${q.id}`);ids.add(q.id)}
-          const index=fs.readFileSync('index.html','utf8');for(const asset of ['calendar-model-v3.js','campaign-policy-v3.js','calendar-model-fastpath-v4.js','calendar-domain-v5.js','calendar-persistence-v5.js','calendar-planner-policy-v5.js','planner-dependency-v5.js','planner-engine-v5.js','calendar-actions-v5.js','calendar-runtime-v3.js','cloud-sync-v2.js','notifications.js','pwa-update.js','calendar-ui-v5.js','calendar-advanced-v5.js','calendar-dragdrop-v5.js','calendar-strategic-v5.js','runtime-stability-v5.js'])if(!index.includes(`<script src="${asset}"></script>`))throw new Error(`Production asset missing: ${asset}`);for(const asset of ['planner-engine-v4.js','calendar-ui-v3.js','runtime-stability-v4.js','routine.js','muay-optional.js','capacity-budget.js','scheduler-2.js','time-aware-capacity.js','late-wake-policy.js','schedule-authority.js'])if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Obsolete runtime loaded: ${asset}`);if(index.indexOf('planner-dependency-v5.js')>index.indexOf('planner-engine-v5.js'))throw new Error('Dependency constraints must load before Planner V5');if(index.indexOf('calendar-dragdrop-v5.js')>index.indexOf('calendar-strategic-v5.js'))throw new Error('Strategic UX must load after drag/drop');const v=JSON.parse(fs.readFileSync('version.json','utf8'));if(v.version!=='2.1.1')throw new Error(`Expected 2.1.1, got ${v.version}`);console.log(`Validated ${qs.length} missions and strategic Calendar V5 ${v.version}`);
+          const index=fs.readFileSync('index.html','utf8');for(const asset of ['calendar-model-v3.js','campaign-policy-v3.js','calendar-model-fastpath-v4.js','calendar-domain-v5.js','calendar-persistence-v5.js','calendar-planner-policy-v5.js','planner-dependency-v5.js','sidequest-quality-v5.js','planner-engine-v5.js','opportunistic-sidequests-v5.js','calendar-actions-v5.js','calendar-runtime-v3.js','cloud-sync-v2.js','notifications.js','pwa-update.js','calendar-ui-v5.js','calendar-advanced-v5.js','calendar-dragdrop-v5.js','calendar-strategic-v5.js','runtime-stability-v5.js'])if(!index.includes(`<script src="${asset}"></script>`))throw new Error(`Production asset missing: ${asset}`);for(const asset of ['planner-engine-v4.js','calendar-ui-v3.js','runtime-stability-v4.js','routine.js','muay-optional.js','capacity-budget.js','scheduler-2.js','time-aware-capacity.js','late-wake-policy.js','schedule-authority.js'])if(index.includes(`<script src="${asset}"></script>`))throw new Error(`Obsolete runtime loaded: ${asset}`);if(index.indexOf('sidequest-quality-v5.js')>index.indexOf('planner-engine-v5.js'))throw new Error('Side Quest quality must load before Planner V5');if(index.indexOf('planner-engine-v5.js')>index.indexOf('opportunistic-sidequests-v5.js'))throw new Error('Opportunistic adapter must load after Planner V5');if(index.indexOf('opportunistic-sidequests-v5.js')>index.indexOf('calendar-ui-v5.js'))throw new Error('Opportunistic adapter must load before Calendar UI V5');const v=JSON.parse(fs.readFileSync('version.json','utf8'));if(v.version!=='2.1.3')throw new Error(`Expected 2.1.3, got ${v.version}`);console.log(`Validated ${qs.length} missions and opportunistic Calendar V5 ${v.version}`);
           NODE
