@@ -30,6 +30,7 @@ jobs:
           node --check planner.js
           node --check calendar-model-v3.js
           node --check campaign-policy-v3.js
+          node --check calendar-model-fastpath-v4.js
           node --check planner-engine-v4.js
           node --check calendar-runtime-v3.js
           node --check cloud-sync-v2.js
@@ -43,6 +44,7 @@ jobs:
           node tests/cloud-sync-v2.test.js
           node tests/pwa-runtime-refresh.test.js
           node tests/version-bump-policy.test.js
+          node tests/production-runtime-contract.test.js
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
