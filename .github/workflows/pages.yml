@@ -32,6 +32,7 @@ jobs:
           node --check campaign-policy-v3.js
           node --check calendar-model-fastpath-v4.js
           node --check calendar-domain-v5.js
+          node --check calendar-persistence-v5.js
           node --check planner-engine-v5.js
           node --check calendar-actions-v5.js
           node --check calendar-runtime-v3.js
@@ -39,6 +40,7 @@ jobs:
           node --check notifications.js
           node --check pwa-update.js
           node --check calendar-ui-v5.js
+          node --check calendar-advanced-v5.js
           node --check runtime-stability-v5.js
           node --check sw.js
           node tests/calendar-v5-functional.test.js
