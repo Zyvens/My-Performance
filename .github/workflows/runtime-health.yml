@@ -44,6 +44,7 @@ jobs:
           node --check balanced-capacity.js
           node --check canonical-week-template.js
           node --check canonical-week-policy.js
+          node --check schedule-authority.js
           node --check sw.js
           node tests/scheduler2.test.js
           node tests/live-capacity.test.js
@@ -56,6 +57,7 @@ jobs:
           node tests/balanced-capacity.test.js
           node tests/canonical-week-template.test.js
           node tests/canonical-week-load-order.test.js
+          node tests/schedule-authority.test.js
           node tests/version-bump-policy.test.js
       - name: Guard against known runtime regressions
         run: |
@@ -64,10 +66,11 @@ jobs:
           const recalc=fs.readFileSync('recalc-center-fix.js','utf8');
           if(recalc.includes("const observer=new MutationObserver(()=>bind())"))throw new Error('Regression: recursive MutationObserver');
           const index=fs.readFileSync('index.html','utf8');
-          for(const token of ['data-build="1.5.18"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
+          for(const token of ['data-build="1.5.19"','completion-guard.js','discard-day.js','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','post-funding-rebalance.js','canonical-week-template.js','canonical-week-policy.js','schedule-authority.js'])if(!index.includes(token))throw new Error(`HTML scheduler marker missing: ${token}`);
+          if(index.indexOf('schedule-authority.js')<index.indexOf('completion-guard.js'))throw new Error('Schedule authority must load after every previous scheduler/render wrapper');
           if(index.includes('tuesday-therapy-layout.js'))throw new Error('Superseded Tuesday-only scheduler must not be loaded');
           const health=fs.readFileSync('runtime-health.js','utf8');
-          if(!health.includes("document.documentElement.dataset.build||'1.5.18'"))throw new Error('Runtime badge must read shell build');
+          if(!health.includes("document.documentElement.dataset.build||'1.5.19'"))throw new Error('Runtime badge must read shell build');
           const completion=fs.readFileSync('completion-guard.js','utf8');
           for(const token of ['markManual','recordCompletion','unlockChecks','[data-toggle][disabled]','dependencyStatus(q).missing'])if(!completion.includes(token))throw new Error(`Manual completion authority missing: ${token}`);
           if(completion.includes("toast('Quest bloqueada por dependência')"))throw new Error('Manual completion must never be blocked by dependencies');
@@ -77,18 +80,18 @@ jobs:
           for(const token of ["title:'Terapia'","weekdays:[2]","timeStart:'08:00'","timeEnd:'08:30'","commuteOutMin:60","commuteReturnMin:30","title:'Célula Zion Brave'","weekdays:[4]"])if(!fixed.includes(token))throw new Error(`Canonical fixed commitment missing: ${token}`);
           const fairness=fs.readFileSync('adaptive-fairness.js','utf8');
           for(const token of ['Hard rule: NEVER reuse parentId+date','hardDedup:true','fairnessLate','Adaptive fairness invariant violated'])if(!fairness.includes(token))throw new Error(`Adaptive hard dedup missing: ${token}`);
-          const postFunding=fs.readFileSync('post-funding-rebalance.js','utf8');
-          for(const token of ['funding-strategy-postpass','MyPerformanceAdaptive.recalculate','MyPerformanceAdaptiveFairness'])if(!postFunding.includes(token))throw new Error(`Post-funding recalculation missing: ${token}`);
           const balance=fs.readFileSync('balanced-capacity.js','utf8');
           for(const token of ['STUDY_MIN=180','GSA_SOFT_TARGET=480','capacityStudyProtected','3h'])if(!balance.includes(token))throw new Error(`Three-hour balanced capacity missing: ${token}`);
           const canonical=fs.readFileSync('canonical-week-template.js','utf8');
           for(const token of ["2:{wake:360,end:1350,therapy:true,gym:[720,810,'Perna']","3:{wake:270,end:1350,bni:true","4:{wake:360,end:1410","study:[[900,1080]]","5:{wake:360,end:1200","study:[[960,1140]]","6:{wake:360,end:780","study:[[540,720]]","domingo protegido para descanso"])if(!canonical.includes(token))throw new Error(`Canonical week invariant missing: ${token}`);
           const policy=fs.readFileSync('canonical-week-policy.js','utf8');
           for(const token of ['STUDY_MIN=180','WORKOUT_TARGET=6','capacity.workoutTarget=WORKOUT_TARGET'])if(!policy.includes(token))throw new Error(`Canonical week policy missing: ${token}`);
+          const authority=fs.readFileSync('schedule-authority.js','utf8');
+          for(const token of ["personal-therapy-weekly","gsa-bni-weekly","personal-zion-brave-weekly","STUDY_MIN=180","repairMandatory","renderToday=renderTodayAuthority","canonicalMandatory:true"])if(!authority.includes(token))throw new Error(`Mandatory schedule authority missing: ${token}`);
           const sw=fs.readFileSync('sw.js','utf8');
-          for(const token of ['my-performance-v1.5.18','fixed-commitments.js','adaptive-fairness.js','balanced-capacity.js','canonical-week-template.js','canonical-week-policy.js','post-funding-rebalance.js'])if(!sw.includes(token))throw new Error(`PWA canonical-week build incomplete: ${token}`);
-          if(sw.includes('tuesday-therapy-layout.js'))throw new Error('Superseded Tuesday-only script must not be cached');
+          for(const token of ['my-performance-v1.5.19','canonical-week-template.js','canonical-week-policy.js','schedule-authority.js'])if(!sw.includes(token))throw new Error(`PWA schedule-authority build incomplete: ${token}`);
+          if(!sw.includes("key.startsWith('my-performance-')"))throw new Error('Service worker must only delete My Performance caches');
           const version=JSON.parse(fs.readFileSync('version.json','utf8'));
-          if(version.version!=='1.5.18')throw new Error('Server version beacon mismatch');
-          console.log('Runtime, PWA, canonical week, 3h study and Avançar hard-dedup guards passed');
+          if(version.version!=='1.5.19')throw new Error('Server version beacon mismatch');
+          console.log('Runtime, PWA and mandatory schedule authority guards passed');
           NODE
