@@ -1,0 +1,34 @@
+const DEFAULT_DATA_API_URL='https://ep-fancy-wave-a6thlzk9.apirest.us-west-2.aws.neon.tech/neondb/rest/v1';
+
+function bearer(request){
+  const value=String(request.headers?.authorization||'');
+  if(!value.startsWith('Bearer ')||value.length<20)return '';
+  return value;
+}
+
+export async function neonRpc(request,response,rpcName,args={}){
+  response.setHeader('Cache-Control','no-store');
+  response.setHeader('X-Content-Type-Options','nosniff');
+  if(request.method!=='POST'){
+    response.setHeader('Allow','POST');
+    return response.status(405).json({ok:false,error:'method_not_allowed'});
+  }
+  const authorization=bearer(request);
+  if(!authorization)return response.status(401).json({ok:false,error:'authentication_required'});
+  const base=String(process.env.NEON_DATA_API_URL||DEFAULT_DATA_API_URL).replace(/\/$/,'');
+  try{
+    const upstream=await fetch(`${base}/rpc/${rpcName}`,{
+      method:'POST',
+      headers:{Authorization:authorization,'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(args||{}),
+      signal:AbortSignal.timeout(10000)
+    });
+    const text=await upstream.text();
+    let data=null;try{data=text?JSON.parse(text):null}catch{data={message:text}}
+    if(!upstream.ok)return response.status(upstream.status).json({ok:false,error:'neon_rpc_failed',detail:data});
+    return response.status(200).json({ok:true,data});
+  }catch(error){
+    console.error('Neon Data API gateway failure',{rpcName,message:String(error?.message||error)});
+    return response.status(502).json({ok:false,error:'neon_gateway_unavailable'});
+  }
+}
