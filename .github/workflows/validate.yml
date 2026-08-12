@@ -16,6 +16,12 @@ jobs:
       - name: Check production JavaScript syntax
         run: |
           for f in data.js routine-data.js app.js sp-clock-v6.js scheduler-core.js planner.js calendar-model-v3.js campaign-policy-v3.js calendar-model-fastpath-v4.js state-revision-prune-v8.js calendar-domain-v5.js calendar-revision-safety-v8.js calendar-mutation-bounded-v9.js calendar-groups-v7.js quest-audit-v6.js taxonomy-fillers-v10.js quest-milestones-v6.js quantitative-mainquests-v6.js calendar-persistence-v5.js calendar-planner-policy-v5.js planner-dependency-v5.js sidequest-quality-v5.js planner-engine-v5.js planner-group-integrity-v5.js sidequest-bulk-v10.js routine-anchors-v7.js day-frame-v5.js day-frame-clock-v8.js wake-time-ui-v6.js opportunistic-sidequests-v5.js calendar-actions-v5.js calendar-runtime-v3.js cloud-sync-v2.js notifications.js pwa-update.js calendar-ui-v5.js temporal-execution-v8.js temporal-execution-ui-v8.js modal-ui-fix-v5.js mission-context-v5.js routine-side-policy-v7.js fragment-progress-v6.js weekly-config-ui-v7.js interactive-week-config-v8.js sidequest-duration-v9.js filler-ui-v10.js daily-review-v6.js calendar-advanced-v5.js mainquest-grouped-config-v9.js sidequest-bulk-ui-v10.js group-root-config-v10.js group-root-extras-v10.js calendar-dragdrop-v5.js calendar-strategic-v5.js retired-views-v6.js runtime-stability-v5.js sw.js; do node --check "$f"; done
+      - name: Group-root taxonomy regression
+        run: node tests/taxonomy-fillers-v10.test.js
+      - name: Atomic bulk Side Quest regression
+        run: node tests/sidequest-bulk-v10.test.js
+      - name: Group-root UI contract regression
+        run: node tests/group-root-v10-contract.test.js
       - name: Calendar functional regressions
         run: |
           node tests/calendar-v5-functional.test.js
@@ -24,15 +30,12 @@ jobs:
           node tests/modal-ui-v5.test.js
           node tests/calendar-v5-strategic.test.js
           node tests/quest-audit-v6.test.js
-          node tests/taxonomy-fillers-v10.test.js
-          node tests/sidequest-bulk-v10.test.js
           node tests/daily-review-v6.test.js
           node tests/retired-views-v6.test.js
           node tests/wake-quantity-ui-v6.test.js
           node tests/weekly-config-v7.test.js
           node tests/interactive-week-config-v8.test.js
           node tests/config-v9-regression.test.js
-          node tests/group-root-v10-contract.test.js
           node tests/temporal-execution-v8.test.js
           node tests/temporal-gap-boundary-v8.test.js
           node tests/revision-wake-safety-v8.test.js
