@@ -1,0 +1,21 @@
+name: Side Quest Priority V12
+on:
+  pull_request:
+    paths:
+      - 'sidequest-priority-v11.js'
+      - 'sidequest-priority-ui-v11.js'
+      - 'tests/sidequest-priority-v12-contract.test.js'
+      - '.github/workflows/sidequest-priority-v12.yml'
+  push:
+    branches: [main]
+jobs:
+  priority:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check sidequest-priority-v11.js
+      - run: node --check sidequest-priority-ui-v11.js
+      - run: node tests/sidequest-priority-v12-contract.test.js
