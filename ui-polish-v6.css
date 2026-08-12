@@ -1,0 +1,8 @@
+/* My Performance UI polish V6 */
+.pill,.tag,.type-badge,.legend-chip,.mission-fragment-progress{display:inline-flex;align-items:center;justify-content:center;text-align:center;vertical-align:middle;line-height:1.15}
+.pill,.tag,.type-badge{min-height:24px}
+.v5-meta .pill,.v5-meta .tag,.v5-meta .type-badge{white-space:nowrap}
+.quantitative-plan{display:block;margin-top:4px;color:#b7d8c9}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:16px}
+#wakeTimeTitle{padding-right:44px}
+@media(max-width:760px){.pill,.tag,.type-badge{min-height:22px}.modal-actions{justify-content:stretch}.modal-actions .btn{flex:1 1 auto}}
