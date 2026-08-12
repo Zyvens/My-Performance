@@ -1,14 +1,14 @@
 "use strict";
-/* My Performance 2.8.3 — navigation/performance/stability hot-path guard.
+/* My Performance 2.9.4 — navigation/performance/stability hot-path guard.
    UI-only navigation must not invalidate Planner caches or trigger cloud/state mutation listeners.
-   Runtime mutations receive build/schema/sync metadata, deep links are authoritative, and notifications use Planner V5. */
+   Today navigation is captured authoritatively so stale/replaced button handlers cannot block the view. */
 (function(){
   if(typeof state==='undefined'||typeof render!=='function')return;
-  const VERSION=14,STATE_KEY='my_performance_v1',SCHEMA_VERSION=1,Clock=window.MyPerformanceClock;
-  const BUILD=String(document.documentElement.dataset.build||'2.8.3');
+  const VERSION=15,STATE_KEY='my_performance_v1',SCHEMA_VERSION=1,Clock=window.MyPerformanceClock;
+  const BUILD=String(document.documentElement.dataset.build||'2.9.4');
   const VALID_VIEWS=new Set(['dashboard','today','quests','player','rewards','config']);
   const baseRender=render,baseSaveState=typeof saveState==='function'?saveState:null;
-  let rendering=false,queued=false,lastRenderAt=0,skippedReentry=0;
+  let rendering=false,queued=false,lastRenderAt=0,skippedReentry=0,todayNavigations=0,todayRenderErrors=0,navigationToken=0;
 
   function currentToday(){return Clock?.today?.()||(typeof today==='function'?today():new Date().toISOString().slice(0,10))}
   function persistUiOnly(){
@@ -35,9 +35,35 @@
       localStorage.setItem(STATE_KEY,JSON.stringify(raw));
     }catch(_e){}
   }
+  function activateNav(view){
+    document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+    document.documentElement.dataset.activeView=view;
+  }
+  function updateRoute(view){
+    try{
+      const u=new URL(location.href);
+      if(u.searchParams.get('view')!==view){u.searchParams.set('view',view);history.replaceState(history.state,'',u)}
+    }catch(_e){}
+  }
+  function scrollTop(){try{window.scrollTo({top:0,behavior:'smooth'})}catch(_e){try{window.scrollTo(0,0)}catch(_e2){}}}
+  function renderTodaySafe(){
+    try{render();return true}
+    catch(error){
+      todayRenderErrors++;
+      console.error('My Performance Today render failed',error);
+      const direct=window.MyPerformanceCalendarUI?.renderToday;
+      if(typeof direct==='function'){
+        try{direct();activateNav('today');window.dispatchEvent(new CustomEvent('my-performance-view-rendered',{detail:{view:'today',engine:'calendar-v5',recovered:true}}));return true}catch(recoveryError){console.error('My Performance Today direct recovery failed',recoveryError)}
+      }
+      const host=document.getElementById('view');
+      if(host)host.innerHTML='<div class="card danger"><span class="eyebrow">HOJE</span><h2>Não foi possível montar o calendário agora.</h2><p class="muted">O estado da aba foi preservado. Tente novamente sem sair desta tela.</p><button class="btn primary" id="retryTodayNavigation">Tentar novamente</button></div>';
+      document.getElementById('retryTodayNavigation')?.addEventListener('click',()=>go('today'));
+      activateNav('today');
+      return false;
+    }
+  }
 
-  /* Preserve every previously-installed saveState wrapper, but make metadata authoritative after it runs.
-     app.js still has a historical APP_VERSION constant; this layer prevents it from leaking into persisted state. */
+  /* Preserve every previously-installed saveState wrapper, but make metadata authoritative after it runs. */
   if(baseSaveState)saveState=function(){
     stampMutation();
     const out=baseSaveState.apply(this,arguments);
@@ -47,15 +73,30 @@
     return out;
   };
 
-  go=function(view){
+  function navigate(view,options={}){
     if(!view)return;
     view=VALID_VIEWS.has(view)?view:'dashboard';
+    const token=++navigationToken;
     state.view=view;
     if(view==='today')state.plannerDate=currentToday();
     persistUiOnly();
-    render();
-    try{window.scrollTo({top:0,behavior:'smooth'})}catch(_e){try{window.scrollTo(0,0)}catch(_e2){}}
-  };
+    activateNav(view);
+    updateRoute(view);
+
+    if(view==='today'&&options.defer!==false){
+      todayNavigations++;
+      /* Yield one frame so the pressed/active state becomes visible before the Planner builds Today. */
+      requestAnimationFrame(()=>{
+        if(token!==navigationToken||state.view!=='today')return;
+        renderTodaySafe();
+        scrollTop();
+      });
+      return;
+    }
+    if(view==='today'){todayNavigations++;renderTodaySafe()}else render();
+    scrollTop();
+  }
+  go=function(view){return navigate(view,{defer:view==='today'})};
 
   render=function(){
     if(rendering){queued=true;skippedReentry++;return;}
@@ -69,14 +110,12 @@
     }
   };
 
-  /* Deep links/manifest shortcuts are now authoritative at boot. Retired/unknown views fail closed to Dashboard. */
+  /* Deep links/manifest shortcuts are authoritative at boot. */
   try{
     const requested=new URL(location.href).searchParams.get('view');
-    if(requested){state.view=VALID_VIEWS.has(requested)?requested:'dashboard';if(state.view==='today')state.plannerDate=currentToday();persistUiOnly()}
+    if(requested){state.view=VALID_VIEWS.has(requested)?requested:'dashboard';if(state.view==='today')state.plannerDate=currentToday();persistUiOnly();activateNav(state.view)}
   }catch(_e){}
 
-  /* Compatibility facade only: Notifications V1 historically asks MyPerformanceRoutine for missionNow/toTime.
-     The facade points those reads at the single production scheduling authority, Planner Engine V5. */
   const Planner=window.MyPerformancePlannerEngine;
   if(Planner?.missionNow)window.MyPerformanceRoutine={
     missionNow:function(){return Planner.missionNow()},
@@ -84,23 +123,31 @@
     source:'planner-engine-v5-compat'
   };
 
-  /* Resilient delegated navigation: static nav normally has onclick from app.js,
-     but this keeps Dashboard/Hoje operational if a later module replaces nodes/listeners. */
+  /* Today is intercepted in capture phase. This intentionally wins over stale onclick handlers installed earlier. */
+  document.addEventListener('click',e=>{
+    const b=e.target?.closest?.('[data-view="today"]');
+    if(!b||b.disabled)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    navigate('today',{defer:true});
+  },true);
+
+  /* Generic fallback for any nav node that has no direct handler. */
   document.addEventListener('click',e=>{
     const b=e.target?.closest?.('[data-view]');
-    if(!b||b.disabled)return;
+    if(!b||b.disabled||b.dataset.view==='today')return;
     if(typeof b.onclick==='function')return;
     e.preventDefault();
-    go(b.dataset.view);
+    navigate(b.dataset.view,{defer:false});
   });
 
-  /* Notification clicks focus an existing PWA client through a SW message. Make that message actually route to Today. */
-  try{navigator.serviceWorker?.addEventListener?.('message',e=>{if(e.data?.type==='OPEN_TODAY')go('today')})}catch(_e){}
+  try{navigator.serviceWorker?.addEventListener?.('message',e=>{if(e.data?.type==='OPEN_TODAY')navigate('today',{defer:true})})}catch(_e){}
 
   window.MyPerformanceRuntimePerformance={
     VERSION,BUILD,SCHEMA_VERSION,
     validViews:[...VALID_VIEWS],
-    metrics:()=>({lastRenderMs:Math.round(lastRenderAt*10)/10,skippedReentry,view:state.view,planner:window.MyPerformancePlannerEngine?.metrics?.()||null}),
+    navigate,
+    metrics:()=>({lastRenderMs:Math.round(lastRenderAt*10)/10,skippedReentry,todayNavigations,todayRenderErrors,view:state.view,planner:window.MyPerformancePlannerEngine?.metrics?.()||null}),
     persistUiOnly,stampMutation
   };
 })();
