@@ -1,0 +1,11 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const code=fs.readFileSync('preboot-compact-v12.js','utf8');
+const storage={m:new Map(),getItem(k){return this.m.get(k)||null},setItem(k,v){this.m.set(k,String(v))},removeItem(k){this.m.delete(k)}};
+const revisions=Array.from({length:20},(_,i)=>({id:i,at:'x',reason:'r',snapshot:{calendarV5:{revisions:[{huge:'x'.repeat(5000)}],decisionLog:Array(100).fill({x:'y'}),payload:'z'.repeat(1000)},windows:[]}}));
+const history={};for(let d=1;d<=31;d++)history[`2026-07-${String(d).padStart(2,'0')}`]=[{questId:`q${d}`,qSnapshot:{title:'Q'},start:1,end:2}];
+const state={plannerDate:'2026-08-10',completed:{a:'x'},xpLedger:{a:20},calendarExecutionV8:{history,dayCheckpoints:JSON.parse(JSON.stringify(history)),actions:Array.from({length:300},(_,i)=>({i}))},calendarV5:{revisions,decisionLog:Array.from({length:200},(_,i)=>({i})),discardedDays:{'2025-01-01':{},'2099-01-01':{}}},dailyReviewV6:{history:Array(50).fill({x:1}),pending:Array.from({length:300},(_,i)=>({scheduledDate:'2026-08-11',i}))}};
+storage.setItem('my_performance_v1',JSON.stringify(state));storage.setItem('my_performance_neon_base_snapshot',JSON.stringify(state));const before=storage.getItem('my_performance_v1').length;
+const ctx={console,Date,Intl,JSON,Math,localStorage:storage,window:{}};ctx.globalThis=ctx;vm.createContext(ctx);vm.runInContext(code,ctx);
+const afterRaw=storage.getItem('my_performance_v1'),after=JSON.parse(afterRaw),base=storage.getItem('my_performance_neon_base_snapshot');
+assert(afterRaw.length<before,'preboot must reduce an inflated persisted state before app.js loads');assert(after.plannerDate&&after.plannerDate!=='2026-08-10','stale plannerDate must be replaced by Sao Paulo today');assert(after.calendarExecutionV8.actions.length<=80);assert(Object.keys(after.calendarExecutionV8.history).length<=7);assert(after.calendarV5.revisions.length<=6);assert(after.calendarV5.decisionLog.length<=60);assert(after.dailyReviewV6.history.length<=10);assert(after.dailyReviewV6.pending.length<=100);assert(base.startsWith('h2:'),'Neon base snapshot must become a compact signature');assert(ctx.window.__MyPerformancePreboot.savedBytes>0);
+console.log('Preboot V12 compact-state/mobile startup regression passed');
