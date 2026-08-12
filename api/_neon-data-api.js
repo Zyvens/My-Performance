@@ -11,10 +11,10 @@ export async function neonRpc(request,response,rpcName,args={}){
   response.setHeader('X-Content-Type-Options','nosniff');
   if(request.method!=='POST'){
     response.setHeader('Allow','POST');
-    return response.status(405).json({ok:false,error:'method_not_allowed'});
+    return response.status(405).json({message:'method_not_allowed'});
   }
   const authorization=bearer(request);
-  if(!authorization)return response.status(401).json({ok:false,error:'authentication_required'});
+  if(!authorization)return response.status(401).json({message:'authentication_required'});
   const base=String(process.env.NEON_DATA_API_URL||DEFAULT_DATA_API_URL).replace(/\/$/,'');
   try{
     const upstream=await fetch(`${base}/rpc/${rpcName}`,{
@@ -24,11 +24,11 @@ export async function neonRpc(request,response,rpcName,args={}){
       signal:AbortSignal.timeout(10000)
     });
     const text=await upstream.text();
-    let data=null;try{data=text?JSON.parse(text):null}catch{data={message:text}}
-    if(!upstream.ok)return response.status(upstream.status).json({ok:false,error:'neon_rpc_failed',detail:data});
-    return response.status(200).json({ok:true,data});
+    response.status(upstream.status);
+    response.setHeader('Content-Type',upstream.headers.get('content-type')||'application/json; charset=utf-8');
+    return response.send(text);
   }catch(error){
     console.error('Neon Data API gateway failure',{rpcName,message:String(error?.message||error)});
-    return response.status(502).json({ok:false,error:'neon_gateway_unavailable'});
+    return response.status(502).json({message:'neon_gateway_unavailable'});
   }
 }
