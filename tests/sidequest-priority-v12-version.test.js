@@ -1,0 +1,1 @@
+const fs=require('fs'),assert=require('assert');const v=JSON.parse(fs.readFileSync('version.json'));assert.equal(v.version,'2.9.3');assert(fs.readFileSync('index.html','utf8').includes('data-build="2.9.3"'));assert(fs.readFileSync('sw.js','utf8').includes("BUILD='2.9.3'"));console.log('Build 2.9.3 aligned');
