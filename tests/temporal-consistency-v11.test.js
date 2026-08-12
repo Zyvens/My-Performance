@@ -16,12 +16,12 @@ assert(!p.slots.some(x=>x.id==='fresh'),'past must not contain freshly allocated
 assert(p.slots.some(x=>x.id==='hist-pending'),'unreviewed historical fact remains visible until day is discarded/reviewed');
 assert(p.slots.some(x=>x.id==='hist-done'),'completed historical fact must remain');
 assert(p.slots.some(x=>x.id==='event'),'past Event remains factual');
-assert.deepStrictEqual(p.outsideCalendar,[],'past must never expose retroactive backlog/fill gaps');
-assert.deepStrictEqual(E.emptyWindows('2026-08-11'),[],'past has zero fillable gaps');
+assert.strictEqual(p.outsideCalendar.length,0,'past must never expose retroactive backlog/fill gaps');
+assert.strictEqual(E.emptyWindows('2026-08-11').length,0,'past has zero fillable gaps');
 ctx.state.calendarV3.discardedDays['2026-08-11']={at:'now'};
 p=E.planDay('2026-08-11');
 assert(!p.slots.some(x=>x.id==='hist-pending'),'discarded day must not retain pending awaiting-confirmation work');
 assert(p.slots.some(x=>x.id==='hist-done'),'discarding a day must preserve already completed history');
 assert(p.slots.some(x=>x.id==='event'),'discarding a day must preserve factual Events');
-assert.deepStrictEqual(E.emptyWindows('2026-08-11'),[]);
+assert.strictEqual(E.emptyWindows('2026-08-11').length,0);
 console.log('Temporal V11 immutable-past/discard semantics passed');
