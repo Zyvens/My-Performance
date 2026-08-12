@@ -1,0 +1,34 @@
+name: Planner V11 Diagnostics
+
+on:
+  pull_request:
+
+jobs:
+  temporal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tests/temporal-consistency-v11.test.js
+  windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tests/window-authority-v11.test.js
+  sidequest-priority:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tests/sidequest-priority-v11.test.js
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tests/planner-consistency-v11-contract.test.js
