@@ -26,9 +26,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate My Performance 2.4.1 temporal execution
+      - name: Validate My Performance 2.4.2 wake-safe temporal execution
         run: |
-          for f in sp-clock-v6.js calendar-groups-v7.js quest-audit-v6.js quest-milestones-v6.js quantitative-mainquests-v6.js planner-engine-v5.js planner-group-integrity-v5.js routine-anchors-v7.js day-frame-v5.js wake-time-ui-v6.js temporal-execution-v8.js temporal-execution-ui-v8.js mission-context-v5.js routine-side-policy-v7.js fragment-progress-v6.js weekly-config-ui-v7.js daily-review-v6.js retired-views-v6.js sw.js; do node --check "$f"; done
+          for f in sp-clock-v6.js state-revision-prune-v8.js calendar-domain-v5.js calendar-revision-safety-v8.js calendar-groups-v7.js quest-audit-v6.js quest-milestones-v6.js quantitative-mainquests-v6.js planner-engine-v5.js planner-group-integrity-v5.js routine-anchors-v7.js day-frame-v5.js day-frame-clock-v8.js wake-time-ui-v6.js temporal-execution-v8.js temporal-execution-ui-v8.js mission-context-v5.js routine-side-policy-v7.js fragment-progress-v6.js weekly-config-ui-v7.js daily-review-v6.js retired-views-v6.js sw.js; do node --check "$f"; done
           node tests/calendar-v5-functional.test.js
           node tests/calendar-v5-routine-context.test.js
           node tests/opportunistic-sidequests.test.js
@@ -40,6 +40,8 @@ jobs:
           node tests/wake-quantity-ui-v6.test.js
           node tests/weekly-config-v7.test.js
           node tests/temporal-execution-v8.test.js
+          node tests/temporal-gap-boundary-v8.test.js
+          node tests/revision-wake-safety-v8.test.js
           node --max-old-space-size=64 tests/planner-v5-stress.test.js
           node tests/calendar-v5-ui-contract.test.js
           node tests/cloud-sync-v2.test.js
