@@ -1,6 +1,6 @@
 const fs=require('fs'),assert=require('assert');
-const index=fs.readFileSync('index.html','utf8'),groups=fs.readFileSync('calendar-groups-v7.js','utf8'),anchors=fs.readFileSync('routine-anchors-v7.js','utf8'),routine=fs.readFileSync('routine-side-policy-v7.js','utf8'),ui=fs.readFileSync('weekly-config-ui-v7.js','utf8'),css=fs.readFileSync('weekly-config-v7.css','utf8'),sw=fs.readFileSync('sw.js','utf8'),version=require('../version.json');
-assert.strictEqual(version.version,'2.4.0');assert(index.includes('data-build="2.4.0"'));
+const index=fs.readFileSync('index.html','utf8'),groups=fs.readFileSync('calendar-groups-v7.js','utf8'),anchors=fs.readFileSync('routine-anchors-v7.js','utf8'),routine=fs.readFileSync('routine-side-policy-v7.js','utf8'),ui=fs.readFileSync('weekly-config-ui-v7.js','utf8'),css=fs.readFileSync('weekly-config-v7.css','utf8'),sw=fs.readFileSync('sw.js','utf8'),version=require('../version.json'),v=version.version;
+assert(index.includes(`data-build="${v}"`),'index build must follow version.json');
 for(const a of ['calendar-groups-v7.js','routine-anchors-v7.js','routine-side-policy-v7.js','weekly-config-ui-v7.js','weekly-config-v7.css'])assert(index.includes(a),`missing ${a}`);
 assert(index.indexOf('calendar-domain-v5.js')<index.indexOf('calendar-groups-v7.js'),'groups must extend the domain before audit/planning');
 assert(index.indexOf('planner-group-integrity-v5.js')<index.indexOf('routine-anchors-v7.js'),'anchors must see the final Planner group routing');
@@ -13,5 +13,5 @@ for(const t of ["windowIds:['mon-lunch','tue-lunch','wed-lunch','thu-lunch','fri
 for(const t of ['Janelas · Domingo a Sábado','Acordar e dormir','+ Grupo','bolinhas representam os Grupos','data-anchor-wake','data-anchor-sleep','Acordar e dormir são âncoras do dia, não Eventos'])assert(ui.includes(t),`weekly config UI missing ${t}`);
 for(const t of ['.week-config-map','.week-window-block','.week-anchor-line.wake','.week-anchor-line.sleep','.group-manager-v7'])assert(css.includes(t),`weekly config CSS missing ${t}`);
 for(const a of ['./calendar-groups-v7.js','./routine-anchors-v7.js','./routine-side-policy-v7.js','./weekly-config-ui-v7.js','./weekly-config-v7.css'])assert(sw.includes(a),`PWA missing ${a}`);
-assert(sw.includes("BUILD='2.4.0'"));assert(sw.includes("CACHE='my-performance-v2.4.0'"));
-console.log('Weekly configuration, anchors, meals and dynamic Groups regression passed');
+assert(sw.includes(`BUILD='${v}'`));assert(sw.includes(`CACHE='my-performance-v${v}'`));
+console.log(`Weekly configuration, anchors, meals and dynamic Groups regression passed for ${v}`);
