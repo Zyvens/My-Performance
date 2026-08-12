@@ -1,5 +1,5 @@
 "use strict";
-/* My Performance 2.4.1 — temporal execution authority. Past is immutable; Planner V5 allocates only live/future capacity. */
+/* My Performance 2.4.2 — temporal execution authority. Past is immutable; Planner V5 allocates only live/future capacity. */
 (function(){
   const Clock=window.MyPerformanceClock,D=window.MyPerformanceCalendarDomain,E=window.MyPerformancePlannerEngine;
   if(!Clock||!D||!E||typeof state==='undefined')return;
@@ -21,7 +21,13 @@
   function pastSlots(d,m){const explicit=rows(d).map(asSlot),keys=new Set(explicit.map(x=>x.sourceSlotId||x.workKey));for(const r of baseline(d))if(r.start<m&&!keys.has(r.sourceSlotId||r.workKey))explicit.push(asSlot(r));return explicit}
   function planDay(d=Clock.today()){d=d||Clock.today();if(d===Clock.today()&&(barrierDate!==d||barrierMin<0)){baseline(d);refresh()}const p=future(d),m=boundary(d),past=pastSlots(d,m),slots=(p.slots||[]).filter(s=>!s.event?.systemTemporalBarrier&&!s.systemTemporalBarrier&&!(work(s)&&d===Clock.today()&&s.start<barrierMin));const have=new Set(slots.map(s=>s.id));for(const s of past)if(!have.has(s.id)){slots.push(s);have.add(s.id)}slots.sort((a,b)=>a.start-b.start||a.end-b.end);return Object.assign({},p,{slots,temporalBoundary:d===Clock.today()?barrierMin:null,executionHistory:true})}
   function planWeek(d=Clock.today()){const ws=weekStart(d);return Array.from({length:7},(_,i)=>planDay(addDays(ws,i)))}
-  function emptyWindows(p=Clock.today()){p=typeof p==='string'?planDay(p):p;return baseEmpty(Object.assign({},p,{slots:(p.slots||[]).filter(s=>!s.executionHistory&&!s.event?.systemTemporalBarrier&&!s.systemTemporalBarrier)}))}
+  function gapOccupancy(p){return(p.slots||[]).filter(s=>!s.event?.systemTemporalBarrier&&!s.systemTemporalBarrier).map(s=>{if(!s.executionHistory)return s;const release=Number(s.releaseMinutes||0),cut=Number(s.releaseStart);if(release>0&&Number.isFinite(cut)){const end=Math.max(Number(s.start||0),Math.min(Number(s.end||0),cut));if(end<=Number(s.start||0))return null;return Object.assign({},s,{end})}return s}).filter(Boolean)}
+  function emptyWindows(p=Clock.today()){
+    p=typeof p==='string'?planDay(p):p;const date=p?.date||Clock.today(),todaySp=Clock.today();if(date<todaySp)return[];
+    let gaps=baseEmpty(Object.assign({},p,{slots:gapOccupancy(p)}));
+    if(date!==todaySp)return gaps;
+    const now=Clock.minutesNow();return gaps.map(g=>{const start=Math.max(Number(g.start||0),now),end=Number(g.end||0);return Object.assign({},g,{start,end,minutes:Math.max(0,end-start)})}).filter(g=>g.minutes>=10)
+  }
   function missionNow(d=Clock.today()){const p=planDay(d),m=d===Clock.today()?Clock.minutesNow():0,live=p.slots.filter(s=>!s.executionHistory&&!s.eventTravel);return{current:live.find(s=>s.start<=m&&s.end>m)||null,next:live.find(s=>s.start>m)||null,plan:p}}
   function occ(q,d){try{return occurrenceKey(q,d)}catch{return q?.id||''}}
   function finishQuest(q,d){let dep={locked:false};try{dep=dependencyStatus(q)}catch{}if(dep.locked){toast('Quest bloqueada por dependência');return false}const k=occ(q,d);if(state.completed?.[k])return true;state.completed=state.completed||{};state.xpLedger=state.xpLedger||{};state.bonusLedger=state.bonusLedger||{};state.completed[k]=Clock.stamp();state.xpLedger[k]=Number(q.xp||20);try{addActivity(Clock.today())}catch{};try{const c=(q.correlations||[]).filter(id=>hasEverDone(id));if(c.length)state.bonusLedger[k]=Math.max(5,Math.round(Number(q.xp||20)*.1))}catch{}return true}

@@ -12,14 +12,19 @@
     const current=Clock.time();
     root.innerHTML=`<div class="modal-backdrop" data-wake-modal><div class="modal-card calendar-modal" role="dialog" aria-modal="true" aria-labelledby="wakeTimeTitle"><button class="modal-close" data-wake-close>×</button><span class="eyebrow">INÍCIO REAL DO DIA</span><h2 id="wakeTimeTitle">Que horas você acordou?</h2><p class="muted">Informe o horário real em São Paulo. O período anterior ficará indisponível e o Planner reorganizará somente o restante do dia.</p><div class="field"><label>Horário em que despertou</label><input id="actualWakeTimeV6" type="time" step="60" value="${escHtml(current)}"></div><div class="callout"><b>Como o Planner vai agir</b><p>Missões móveis que ficaram antes desse horário serão reavaliadas. Eventos mantêm seus horários. Deadlines não são alterados.</p></div><div class="modal-actions"><button class="btn" data-wake-cancel>Cancelar</button><button class="btn primary" data-wake-save>Registrar e replanejar</button></div></div></div>`;
     document.body.classList.add('modal-open');
-    const input=root.querySelector('#actualWakeTimeV6');input?.focus();
-    const dismiss=()=>close();root.querySelector('[data-wake-close]')?.addEventListener('click',dismiss);root.querySelector('[data-wake-cancel]')?.addEventListener('click',dismiss);root.querySelector('[data-wake-modal]')?.addEventListener('click',e=>{if(e.target===e.currentTarget)dismiss()});
+    const input=root.querySelector('#actualWakeTimeV6');input?.focus();let busy=false;
+    const dismiss=()=>{if(!busy)close()};root.querySelector('[data-wake-close]')?.addEventListener('click',dismiss);root.querySelector('[data-wake-cancel]')?.addEventListener('click',dismiss);root.querySelector('[data-wake-modal]')?.addEventListener('click',e=>{if(e.target===e.currentTarget)dismiss()});
     root.querySelector('[data-wake-save]')?.addEventListener('click',()=>{
-      const minute=minuteOf(input?.value),now=Clock.minutesNow();
+      if(busy)return;const minute=minuteOf(input?.value),now=Clock.minutesNow();
       if(minute===null){toast('Informe um horário válido.');return}
       if(minute>now){toast('O horário de despertar não pode estar no futuro.');return}
-      if(!Frame.wakeNow(date,minute)){toast('Não foi possível registrar o horário.');return}
-      window.MyPerformancePlannerEngine?.invalidate?.();close();toast(`Acordar registrado às ${input.value}; o restante do dia foi replanejado.`);render()
+      const saveBtn=root.querySelector('[data-wake-save]');busy=true;if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Replanejando…'}
+      try{
+        if(!Frame.wakeNow(date,minute)){busy=false;if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Registrar e replanejar'}toast('Não foi possível registrar o horário.');return}
+        const label=input?.value||Clock.time();close();toast(`Acordar registrado às ${label}; o restante do dia será replanejado.`);
+        const redraw=()=>{try{window.MyPerformanceTemporalExecution?.refreshNow?.();render()}catch(err){console.error('wake replan render failed',err);toast('Horário salvo. Reabra Hoje se a tela não atualizar.')}};
+        if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>setTimeout(redraw,0));else setTimeout(redraw,0)
+      }catch(err){console.error('wake replan failed',err);busy=false;if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Registrar e replanejar'}toast('Falha ao replanejar. O horário não foi alterado.')}
     });
   }
   function patch(){
