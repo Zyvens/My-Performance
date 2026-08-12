@@ -9,6 +9,8 @@
   const escHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmtDate=d=>{try{return new Intl.DateTimeFormat('pt-BR',{timeZone:Clock.TIME_ZONE||'America/Sao_Paulo',weekday:'short',day:'2-digit',month:'2-digit'}).format(new Date(`${d}T12:00:00-03:00`))}catch{return d}};
   const fmtStamp=s=>{if(!s)return'';try{return new Intl.DateTimeFormat('pt-BR',{timeZone:Clock.TIME_ZONE||'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(s))}catch{return String(s)}};
+  function onlyToday(src,today){if(!src||typeof src!=='object'||Array.isArray(src))return{};return Object.prototype.hasOwnProperty.call(src,today)?{[today]:src[today]}:{}}
+  function purgeOperationalPast(){const t=Clock.today();if(state.calendarExecutionV8){const c=state.calendarExecutionV8;c.history=onlyToday(c.history,t);c.dayCheckpoints=onlyToday(c.dayCheckpoints,t);c.actions=(Array.isArray(c.actions)?c.actions:[]).filter(a=>!a?.date||a.date===t).slice(-30)}if(state.calendarV5){const c=state.calendarV5;for(const k of ['discardedDays','skippedDaily','eventCompletions'])c[k]=onlyToday(c[k],t)}if(state.calendarV3){const c=state.calendarV3;for(const k of ['discardedDays','skippedDates','liveCapacityReleases'])if(c[k])c[k]=onlyToday(c[k],t)}delete state.dailyReviewV6;try{localStorage.removeItem('my_performance_daily_review_v6')}catch{}return t}
   function bump(reason='state-change'){revision++;lastReason=reason;lastAt=Clock.stamp();radarCache=null}
   function forceToday(){const t=Clock.today();if(state.plannerDate!==t)state.plannerDate=t;return t}
   const baseInvalidate=typeof E.invalidate==='function'?E.invalidate.bind(E):null;
@@ -25,14 +27,14 @@
   function closeRadar(){radarOpen=false;const box=document.getElementById('futureRadarV13');if(box)box.hidden=true}
   function decorateToday(){if(state.view!=='today'){decorateMissionLedger();return}const t=forceToday();document.getElementById('calPrev')?.remove();document.getElementById('calNext')?.remove();document.getElementById('calToday')?.remove();const nav=document.querySelector('.planner-head .day-nav');if(nav&&!document.getElementById('futureRadarToggleV13')){const b=document.createElement('button');b.className='btn small';b.id='futureRadarToggleV13';b.textContent='◌ Radar futuro';b.onclick=()=>{if(radarOpen){closeRadar();b.textContent='◌ Radar futuro'}else{b.textContent='× Fechar radar';openRadar()}};nav.insertBefore(b,nav.firstChild)}const view=document.getElementById('view');if(view&&!document.getElementById('futureRadarV13')){const box=document.createElement('section');box.id='futureRadarV13';box.className='card future-radar-v13';box.hidden=true;const anchor=view.querySelector('.planner-stats')||view.querySelector('.calendar-v5-legend')||view.firstElementChild;anchor?.insertAdjacentElement('afterend',box)}const title=document.querySelector('.planner-head .eyebrow');if(title)title.textContent='EXECUÇÃO DE HOJE · PLANO FUTURO OCULTO';document.documentElement.dataset.todayAuthority=t;decorateMissionLedger()}
   function onStateSaved(){bump('state-change');forceToday()}
-  function rollover(){const now=Clock.today();if(now===rolloverDate)return;rolloverDate=now;forceToday();bump('day-rollover');try{baseInvalidate?.()}catch{};if(state.view==='today')try{render()}catch{}}
+  function rollover(){const now=Clock.today();if(now===rolloverDate)return;rolloverDate=now;purgeOperationalPast();forceToday();bump('day-rollover');try{baseInvalidate?.()}catch{};try{saveState()}catch{};if(state.view==='today')try{render()}catch{}}
   window.addEventListener('my-performance-state-saved',onStateSaved);
-  window.addEventListener('my-performance-cloud-loaded',()=>{bump('cloud-load');forceToday()});
+  window.addEventListener('my-performance-cloud-loaded',()=>{purgeOperationalPast();bump('cloud-load');forceToday()});
   window.addEventListener('my-performance-view-rendered',()=>requestAnimationFrame(decorateToday));
-  window.addEventListener('pageshow',()=>{forceToday();rollover();requestAnimationFrame(decorateToday)});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){forceToday();rollover();requestAnimationFrame(decorateToday)}});
+  window.addEventListener('pageshow',()=>{purgeOperationalPast();forceToday();rollover();requestAnimationFrame(decorateToday)});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){purgeOperationalPast();forceToday();rollover();requestAnimationFrame(decorateToday)}});
   document.addEventListener('click',e=>{const id=e.target?.id||'';if(id==='calReplan')lastReason='manual-replan';else if(id==='discardDayV5')lastReason='discard-day';else if(/wake/i.test(id))lastReason='wake-change'},true);
   setInterval(rollover,60000);
-  forceToday();
-  window.MyPerformanceTodayOnly={VERSION,HORIZON_DAYS,stats,entriesFor,computeRadar,revision:()=>revision,lastReplan:()=>({reason:lastReason,at:lastAt,revision}),forceToday};
+  purgeOperationalPast();forceToday();
+  window.MyPerformanceTodayOnly={VERSION,HORIZON_DAYS,stats,entriesFor,computeRadar,revision:()=>revision,lastReplan:()=>({reason:lastReason,at:lastAt,revision}),forceToday,purgeOperationalPast};
 })();
