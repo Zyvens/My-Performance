@@ -26,11 +26,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate hot-today performance runtime
+      - name: Validate today-only execution runtime
         run: |
-          for f in preboot-compact-v12.js sp-clock-v6.js state-revision-prune-v8.js calendar-domain-v5.js calendar-revision-safety-v8.js calendar-groups-v7.js quest-audit-v6.js quest-milestones-v6.js quantitative-mainquests-v6.js planner-engine-v5.js planner-group-integrity-v5.js routine-anchors-v7.js day-frame-v5.js day-frame-clock-v8.js wake-time-ui-v6.js temporal-execution-v8.js temporal-consistency-v11.js temporal-execution-ui-v8.js mission-context-v5.js routine-side-policy-v7.js fragment-progress-v6.js weekly-config-ui-v7.js daily-review-v6.js cloud-sync-v2.js retired-views-v6.js boot-ready-v11.js sw.js; do node --check "$f"; done
+          for f in preboot-compact-v12.js sp-clock-v6.js state-revision-prune-v8.js calendar-domain-v5.js calendar-revision-safety-v8.js calendar-groups-v7.js quest-audit-v6.js quest-milestones-v6.js quantitative-mainquests-v6.js planner-engine-v5.js planner-group-integrity-v5.js routine-anchors-v7.js day-frame-v5.js day-frame-clock-v8.js wake-time-ui-v6.js temporal-execution-v8.js temporal-consistency-v11.js temporal-execution-ui-v8.js mission-context-v5.js routine-side-policy-v7.js fragment-progress-v6.js weekly-config-ui-v7.js daily-review-v6.js today-only-runtime-v13.js cloud-sync-v2.js retired-views-v6.js boot-ready-v11.js sw.js; do node --check "$f"; done
           node tests/preboot-compact-v12.test.js
           node tests/temporal-consistency-v11.test.js
+          node tests/today-only-v13.test.js
           node tests/daily-review-v6.test.js
           node tests/temporal-execution-v8.test.js
           node tests/temporal-gap-boundary-v8.test.js
