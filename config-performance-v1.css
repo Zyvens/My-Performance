@@ -1,0 +1,7 @@
+/* My Performance 2.9.0 — reduce layout/paint cost for offscreen Config panels. */
+#view.mp-config-lazy .card,
+#view.mp-config-lazy .section-title,
+#view.mp-config-lazy .form-row{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 260px;
+}
