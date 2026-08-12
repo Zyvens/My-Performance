@@ -1,6 +1,6 @@
 const fs=require('fs'),assert=require('assert'),vm=require('vm');
 const index=fs.readFileSync('index.html','utf8'),wake=fs.readFileSync('wake-time-ui-v6.js','utf8'),quant=fs.readFileSync('quantitative-mainquests-v6.js','utf8'),fragment=fs.readFileSync('fragment-progress-v6.js','utf8'),css=fs.readFileSync('ui-polish-v6.css','utf8'),sw=fs.readFileSync('sw.js','utf8'),version=require('../version.json');
-assert.strictEqual(version.version,'2.3.2');assert(index.includes('data-build="2.3.2"'));
+assert(index.includes(`data-build="${version.version}"`));
 for(const a of ['quantitative-mainquests-v6.js','wake-time-ui-v6.js','fragment-progress-v6.js','ui-polish-v6.css'])assert(index.includes(a),`missing ${a}`);
 assert(index.indexOf('quantitative-mainquests-v6.js')<index.indexOf('planner-engine-v5.js'),'quantitative policy must load before Planner');
 assert(index.indexOf('day-frame-v5.js')<index.indexOf('wake-time-ui-v6.js'),'wake UI must enhance Day Frame');
@@ -13,5 +13,5 @@ const aug=ctx.MyPerformanceCalendarDomain.missionPolicy({id:'study-aug-volume'})
 assert.strictEqual(aug.quantityTarget,600);assert.strictEqual(aug.quantityPerBlock,40);assert.strictEqual(aug.totalBlocks,15);assert.strictEqual(aug.idealSessionMin,90);assert.strictEqual(aug.effortLikelyMin,1350);
 assert.strictEqual(sep.totalBlocks,25);assert.strictEqual(oct.totalBlocks,30);
 for(const a of ['./quantitative-mainquests-v6.js','./wake-time-ui-v6.js','./fragment-progress-v6.js','./ui-polish-v6.css'])assert(sw.includes(a),`PWA missing ${a}`);
-assert(sw.includes("BUILD='2.3.2'"));assert(sw.includes("CACHE='my-performance-v2.3.2'"));
-console.log('Wake-time, centered pills and quantitative fragment regression passed');
+assert(sw.includes(`BUILD='${version.version}'`));assert(sw.includes(`CACHE='my-performance-v${version.version}'`));
+console.log(`Wake-time, centered pills and quantitative fragment regression passed for ${version.version}`);
