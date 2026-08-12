@@ -1,0 +1,1 @@
+html.mp-booting .app-shell,html.mp-booting .bottom-nav{visibility:hidden}html.mp-booting body::after{content:'Carregando Planner…';position:fixed;inset:0;display:grid;place-items:center;background:#061711;color:#63e5b2;font:800 14px/1.2 system-ui;letter-spacing:.08em;z-index:99999}html:not(.mp-booting) body::after{display:none}
