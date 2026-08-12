@@ -1,0 +1,19 @@
+name: Validate Vercel Architecture
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  vercel-architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check gateway client syntax
+        run: node --check cloud-gateway-v1.js
+      - name: Validate Vercel and sync gateway contracts
+        run: node tests/vercel-architecture-contract.test.mjs
