@@ -7,8 +7,8 @@ const D={sideMeta:id=>meta[id],pack:id=>id==='p'?pack:null,recordRevision:()=>{}
 const ctx={console,state:{},saveState:()=>saves++,window:{MyPerformanceCalendarDomain:D,MyPerformanceSideQuestQuality:SQ,MyPerformancePlannerEngine:E,MyPerformanceRoutine:{}}};ctx.window.window=ctx.window;vm.createContext(ctx);vm.runInContext(code,ctx);const P=ctx.window.MyPerformanceSideQuestPriority;
 const usage={};let a={kind:'side',q:{id:'a'},key:'a@x',remaining:60,policy:{packId:'p'}},b={kind:'side',q:{id:'b'},key:'b@x',remaining:60,policy:{packId:'p'}};
 assert(SQ.scoreBonus(a,usage)>SQ.scoreBonus(b,usage),'Filler order must influence priority score');
-assert(SQ.allowed(a,usage));SQ.record(a,30,usage);assert(a.key.includes('::repeat-v11:2'),'first execution should keep a second planner occurrence eligible');assert(SQ.allowed(a,usage));SQ.record(a,30,usage);assert(!SQ.allowed(a,usage),'max 2/day must stop a third execution');
+assert(SQ.allowed(a,usage));SQ.record(a,30,usage);assert(a.key.includes('::repeat-v11:2'),'first execution should keep a second planner occurrence eligible');assert(SQ.allowed(a,usage));SQ.record(a,30,usage);assert(!SQ.allowed(a,usage),'max 2/day must stop a third execution');assert.strictEqual(a.key,'a@x','repeat key must reset at the daily cap');
 let p=E.planDay('x');assert.strictEqual(p.slots[0].workKey,'a@x');assert.strictEqual(p.outsideCalendar[0].key,'a@x','public Planner keys must stay canonical');
-assert(P.reorderFiller('p',['b','a']));assert.deepStrictEqual(pack.missionIds,['b','a']);assert(saves>0&&invalidates>0);
+assert(P.reorderFiller('p',['b','a']));assert.strictEqual(Array.from(pack.missionIds).join(','),'b,a');assert(saves>0&&invalidates>0);
 P.setRepeats('b',3);assert.strictEqual(meta.b.maxRepeatsPerDay,3);
 console.log('Filler order and Side Quest repeat policy V11 passed');
