@@ -5,6 +5,7 @@ on:
       - 'sidequest-priority-v11.js'
       - 'sidequest-priority-ui-v11.js'
       - 'tests/sidequest-priority-v12-contract.test.js'
+      - 'tests/sidequest-priority-v12-functional.test.js'
       - '.github/workflows/sidequest-priority-v12.yml'
   push:
     branches: [main]
@@ -19,3 +20,4 @@ jobs:
       - run: node --check sidequest-priority-v11.js
       - run: node --check sidequest-priority-ui-v11.js
       - run: node tests/sidequest-priority-v12-contract.test.js
+      - run: node tests/sidequest-priority-v12-functional.test.js
