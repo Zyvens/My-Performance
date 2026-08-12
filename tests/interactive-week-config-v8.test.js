@@ -1,0 +1,10 @@
+const fs=require('fs'),assert=require('assert');
+const index=fs.readFileSync('index.html','utf8'),js=fs.readFileSync('interactive-week-config-v8.js','utf8'),css=fs.readFileSync('interactive-week-config-v8.css','utf8'),sw=fs.readFileSync('sw.js','utf8'),version=require('../version.json');
+assert.strictEqual(version.version,'2.4.3');
+assert(index.includes('interactive-week-config-v8.css'));assert(index.includes('interactive-week-config-v8.js'));
+assert(index.indexOf('weekly-config-ui-v7.js')<index.indexOf('interactive-week-config-v8.js'),'interactive map must extend weekly config after base UI');
+for(const t of ['removeLegacyWindowList','Configure a semana diretamente no mapa','data-iwc-window','data-iwc-add','data-iwc-anchor','openWindow','openAnchor','Autorizar Side Quests','Janela dedicada a Side Quests','Zona Livre','Grupo preferencial','Energia esperada'])assert(js.includes(t),`interactive map missing ${t}`);
+for(const t of ['Janelas ativadas','Janelas desativadas','data-sq-left','data-sq-right','Qualquer janela compatível com o Grupo','sqWindows','selectedOptions','Grupo incompatível'])assert(js.includes(t),`Side Quest transfer UI missing ${t}`);
+for(const t of ['.sq-transfer-grid','.sq-transfer-panel','.sq-transfer-arrows','.iwc-window','.iwc-day-add'])assert(css.includes(t),`interactive config CSS missing ${t}`);
+assert(sw.includes("BUILD='2.4.3'"));assert(sw.includes("CACHE='my-performance-v2.4.3'"));assert(sw.includes('./interactive-week-config-v8.js'));assert(sw.includes('./interactive-week-config-v8.css'));
+console.log('Interactive weekly-map and Side Quest window transfer regression passed');
