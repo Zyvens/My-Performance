@@ -5,7 +5,7 @@
   const D=window.MyPerformanceCalendarDomain,SQ=window.MyPerformanceSideQuestQuality,E=window.MyPerformancePlannerEngine;
   if(!D||!SQ||!E||typeof state==='undefined')return;
   const VERSION=12,baseScore=SQ.scoreBonus.bind(SQ),baseAllowed=SQ.allowed.bind(SQ),basePlan=E.planDay.bind(E),baseWeek=E.planWeek.bind(E),baseQuests=typeof quests==='function'?quests:null;
-  const REPEAT_MARK='::repeat-v12:';
+  const REPEAT_MARK='::repeat-v11:';
   function pack(item){return SQ.packForItem?.(item)||D.pack(D.sideMeta?.(item?.q?.id)?.packId)}
   function priorityRank(item){const p=pack(item),i=(p?.missionIds||[]).indexOf(item?.q?.id);return i<0?Number.MAX_SAFE_INTEGER:i}
   function maxRepeats(item){const m=D.sideMeta?.(item?.q?.id);return Math.max(1,Math.min(8,Number(m?.maxRepeatsPerDay||1)))}
