@@ -1,0 +1,17 @@
+const fs=require('fs'),assert=require('assert');
+const index=fs.readFileSync('index.html','utf8'),groups=fs.readFileSync('calendar-groups-v7.js','utf8'),anchors=fs.readFileSync('routine-anchors-v7.js','utf8'),routine=fs.readFileSync('routine-side-policy-v7.js','utf8'),ui=fs.readFileSync('weekly-config-ui-v7.js','utf8'),css=fs.readFileSync('weekly-config-v7.css','utf8'),sw=fs.readFileSync('sw.js','utf8'),version=require('../version.json');
+assert.strictEqual(version.version,'2.4.0');assert(index.includes('data-build="2.4.0"'));
+for(const a of ['calendar-groups-v7.js','routine-anchors-v7.js','routine-side-policy-v7.js','weekly-config-ui-v7.js','weekly-config-v7.css'])assert(index.includes(a),`missing ${a}`);
+assert(index.indexOf('calendar-domain-v5.js')<index.indexOf('calendar-groups-v7.js'),'groups must extend the domain before audit/planning');
+assert(index.indexOf('planner-group-integrity-v5.js')<index.indexOf('routine-anchors-v7.js'),'anchors must see the final Planner group routing');
+assert(index.indexOf('routine-anchors-v7.js')<index.indexOf('day-frame-v5.js'),'Day Frame must capture configured anchor preferences');
+assert(index.indexOf('mission-context-v5.js')<index.indexOf('routine-side-policy-v7.js'),'final routine routing must run after mission-context');
+assert(index.indexOf('routine-side-policy-v7.js')<index.indexOf('weekly-config-ui-v7.js'),'config UI must see final routine policy');
+for(const t of ['function add(data','function update(id','function remove(id','B.groups=groups','B.groupForQuest=function','groupEventRefs'])assert(groups.includes(t),`group runtime missing ${t}`);
+for(const t of ["3:{wake:270,sleep:1350}","4:{wake:360,sleep:1410}",'personal-wake','personal-sleep','tue-lunch','wed-lunch','Encerramento / Sono','extensionMaxMin:120'])assert(anchors.includes(t),`anchor/window migration missing ${t}`);
+for(const t of ["windowIds:['mon-lunch','tue-lunch','wed-lunch','thu-lunch','fri-lunch','sat-lunch']","windowIds:['mon-personal','tue-personal','wed-personal','thu-personal']","patchQuest('routine-shower-post-gym',{weekdays:[1,4,6]})"])assert(routine.includes(t),`meal routing missing ${t}`);
+for(const t of ['Janelas · Domingo a Sábado','Acordar e dormir','+ Grupo','bolinhas representam os Grupos','data-anchor-wake','data-anchor-sleep','Acordar e dormir são âncoras do dia, não Eventos'])assert(ui.includes(t),`weekly config UI missing ${t}`);
+for(const t of ['.week-config-map','.week-window-block','.week-anchor-line.wake','.week-anchor-line.sleep','.group-manager-v7'])assert(css.includes(t),`weekly config CSS missing ${t}`);
+for(const a of ['./calendar-groups-v7.js','./routine-anchors-v7.js','./routine-side-policy-v7.js','./weekly-config-ui-v7.js','./weekly-config-v7.css'])assert(sw.includes(a),`PWA missing ${a}`);
+assert(sw.includes("BUILD='2.4.0'"));assert(sw.includes("CACHE='my-performance-v2.4.0'"));
+console.log('Weekly configuration, anchors, meals and dynamic Groups regression passed');
