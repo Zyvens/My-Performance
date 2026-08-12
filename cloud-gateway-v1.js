@@ -14,7 +14,7 @@
     try{
       const body=await request.clone().text();
       const response=await nativeFetch(route,{method:'POST',headers:{Authorization:auth,'Content-Type':'application/json','Accept':'application/json'},body:body||'{}',credentials:'same-origin',cache:'no-store'});
-      if(response.status===404||response.status>=500)throw new Error(`gateway ${response.status}`);
+      if(!response.ok)throw new Error(`gateway ${response.status}`);
       metrics.gateway++;metrics.lastRoute='vercel';return response;
     }catch(error){
       metrics.errors++;metrics.fallback++;metrics.lastRoute='direct-fallback';
