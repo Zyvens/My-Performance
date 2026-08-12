@@ -1,14 +1,15 @@
 "use strict";
-/* My Performance 2.9.4 — navigation/performance/stability hot-path guard.
+/* My Performance 2.9.5 — navigation/performance/stability hot-path guard.
    UI-only navigation must not invalidate Planner caches or trigger cloud/state mutation listeners.
-   Today navigation is captured authoritatively so stale/replaced button handlers cannot block the view. */
+   Today navigation is captured authoritatively so stale/replaced button handlers cannot block the view.
+   "Não fiz" now gives explicit, policy-aware feedback after the Planner accepts the skip. */
 (function(){
   if(typeof state==='undefined'||typeof render!=='function')return;
-  const VERSION=15,STATE_KEY='my_performance_v1',SCHEMA_VERSION=1,Clock=window.MyPerformanceClock;
-  const BUILD=String(document.documentElement.dataset.build||'2.9.4');
+  const VERSION=16,STATE_KEY='my_performance_v1',SCHEMA_VERSION=1,Clock=window.MyPerformanceClock;
+  const BUILD=String(document.documentElement.dataset.build||'2.9.5');
   const VALID_VIEWS=new Set(['dashboard','today','quests','player','rewards','config']);
   const baseRender=render,baseSaveState=typeof saveState==='function'?saveState:null;
-  let rendering=false,queued=false,lastRenderAt=0,skippedReentry=0,todayNavigations=0,todayRenderErrors=0,navigationToken=0;
+  let rendering=false,queued=false,lastRenderAt=0,skippedReentry=0,todayNavigations=0,todayRenderErrors=0,navigationToken=0,skipFeedbacks=0;
 
   function currentToday(){return Clock?.today?.()||(typeof today==='function'?today():new Date().toISOString().slice(0,10))}
   function persistUiOnly(){
@@ -85,7 +86,6 @@
 
     if(view==='today'&&options.defer!==false){
       todayNavigations++;
-      /* Yield one frame so the pressed/active state becomes visible before the Planner builds Today. */
       requestAnimationFrame(()=>{
         if(token!==navigationToken||state.view!=='today')return;
         renderTodaySafe();
@@ -110,7 +110,6 @@
     }
   };
 
-  /* Deep links/manifest shortcuts are authoritative at boot. */
   try{
     const requested=new URL(location.href).searchParams.get('view');
     if(requested){state.view=VALID_VIEWS.has(requested)?requested:'dashboard';if(state.view==='today')state.plannerDate=currentToday();persistUiOnly();activateNav(state.view)}
@@ -123,7 +122,26 @@
     source:'planner-engine-v5-compat'
   };
 
-  /* Today is intercepted in capture phase. This intentionally wins over stale onclick handlers installed earlier. */
+  /* Give "Não fiz" an explicit reaction only after the Planner accepted the mutation. */
+  if(Planner&&typeof Planner.skipSlot==='function'){
+    const baseSkipSlot=Planner.skipSlot.bind(Planner);
+    Planner.skipSlot=function(slot,date){
+      const accepted=baseSkipSlot(slot,date);
+      if(accepted){
+        skipFeedbacks++;
+        const dailySide=!!slot?.sideQuest&&slot?.originDate===date;
+        queueMicrotask(()=>{
+          try{
+            if(typeof toast==='function')toast(dailySide?'Registrado. Saiu de hoje e não acumula para amanhã.':'Registrado. Replanejei o restante sem alterar o prazo.');
+            if(navigator?.vibrate)navigator.vibrate(35);
+            window.dispatchEvent(new CustomEvent('my-performance-slot-skipped',{detail:{date,slotId:slot?.id||'',questId:slot?.q?.id||'',dailySide,replanned:!dailySide}}));
+          }catch(_e){}
+        });
+      }
+      return accepted;
+    };
+  }
+
   document.addEventListener('click',e=>{
     const b=e.target?.closest?.('[data-view="today"]');
     if(!b||b.disabled)return;
@@ -132,7 +150,6 @@
     navigate('today',{defer:true});
   },true);
 
-  /* Generic fallback for any nav node that has no direct handler. */
   document.addEventListener('click',e=>{
     const b=e.target?.closest?.('[data-view]');
     if(!b||b.disabled||b.dataset.view==='today')return;
@@ -147,7 +164,7 @@
     VERSION,BUILD,SCHEMA_VERSION,
     validViews:[...VALID_VIEWS],
     navigate,
-    metrics:()=>({lastRenderMs:Math.round(lastRenderAt*10)/10,skippedReentry,todayNavigations,todayRenderErrors,view:state.view,planner:window.MyPerformancePlannerEngine?.metrics?.()||null}),
+    metrics:()=>({lastRenderMs:Math.round(lastRenderAt*10)/10,skippedReentry,todayNavigations,todayRenderErrors,skipFeedbacks,view:state.view,planner:window.MyPerformancePlannerEngine?.metrics?.()||null}),
     persistUiOnly,stampMutation
   };
 })();
