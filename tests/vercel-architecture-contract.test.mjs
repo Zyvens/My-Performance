@@ -1,0 +1,30 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+
+const config=JSON.parse(fs.readFileSync('vercel.json','utf8'));
+const health=fs.readFileSync('api/health.js','utf8');
+const pull=fs.readFileSync('api/sync-pull.js','utf8');
+const push=fs.readFileSync('api/sync-push.js','utf8');
+const server=fs.readFileSync('server/neon-data-api.js','utf8');
+const gateway=fs.readFileSync('cloud-gateway-v1.js','utf8');
+const index=fs.readFileSync('index.html','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
+
+assert.equal(config.$schema,'https://openapi.vercel.sh/vercel.json');
+assert.ok(Array.isArray(config.headers),'Vercel headers policy is required');
+assert.ok(config.headers.some(rule=>rule.source==='/sw.js'),'Service worker cache policy is required');
+assert.ok(config.headers.some(rule=>rule.source==='/version.json'),'Version endpoint must bypass cache');
+assert.ok(config.headers.some(rule=>rule.source==='/api/(.*)'),'API no-store policy is required');
+assert.match(health,/runtime:\s*['"]vercel-function['"]/, 'Health endpoint must prove server execution');
+assert.match(health,/Cache-Control/,'Health endpoint must not be cached');
+assert.match(pull,/my_performance_pull/);assert.match(push,/my_performance_push/);
+assert.match(pull,/\.\.\/server\/neon-data-api\.js/);assert.match(push,/\.\.\/server\/neon-data-api\.js/);
+assert.match(server,/Authorization:authorization/,'Gateway must forward authenticated user JWT');
+assert.match(server,/authentication_required/,'Gateway must reject anonymous sync');
+assert.match(server,/NEON_DATA_API_URL/,'Server endpoint must support environment-based Neon URL');
+assert.match(gateway,/\/api\/sync-pull/);assert.match(gateway,/\/api\/sync-push/);
+assert.match(gateway,/direct-fallback/,'GitHub Pages/direct Neon fallback must remain during migration');
+assert.ok(index.indexOf('cloud-gateway-v1.js')<index.indexOf('cloud-sync-v2.js'),'Gateway must wrap fetch before Neon client loads');
+assert.ok(sw.includes("'./cloud-gateway-v1.js'"),'PWA must cache the gateway client');
+assert.ok(!fs.existsSync('api/_neon-data-api.js'),'Server helper must not be exposed as a Vercel Function route');
+console.log('Vercel architecture + authenticated sync gateway contract OK');

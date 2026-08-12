@@ -2,8 +2,8 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const index=fs.readFileSync('index.html','utf8'),sw=fs.readFileSync('sw.js','utf8'),pwa=fs.readFileSync('pwa-update.js','utf8'),css=fs.readFileSync('config-performance-v1.css','utf8'),version=require('../version.json');
 for(const f of ['quest-repository-v1.js','planning-context-v1.js','config-performance-v1.js','performance-observability-v1.js','config-performance-v1.css'])assert(index.includes(f),`missing phase 2 asset ${f}`);
-assert(index.includes(`data-build="${version.version}"`));assert.strictEqual(version.version,'2.9.0');
-assert(sw.includes("CACHE='my-performance-v2.9.0'"));assert(sw.includes("event.request.mode==='navigate'"));assert(sw.includes('caches.match(event.request).then(found=>found||fetch(event.request)'),'static assets must use cache-first');
+assert(index.includes(`data-build="${version.version}"`));
+assert(sw.includes(`CACHE='my-performance-v${version.version}'`));assert(sw.includes("event.request.mode==='navigate'"));assert(sw.includes('caches.match(event.request).then(found=>found||fetch(event.request)'),'static assets must use cache-first');
 assert(pwa.includes('PERIODIC_INTERVAL=30*60*1000'),'PWA periodic update check must be 30 min');assert(pwa.includes('FOREGROUND_MIN_GAP=10*60*1000'),'foreground checks must be throttled');
 assert(css.includes('content-visibility:auto'),'Config must use browser-native lazy rendering');
 
@@ -21,4 +21,4 @@ assert(css.includes('content-visibility:auto'),'Config must use browser-native l
   const a=E.planDay('2026-08-12'),b=E.planDay('2026-08-12');assert.strictEqual(a,b);assert.strictEqual(calls,1,'duplicate planner reads in a render burst should coalesce');
   t+=300;E.planDay('2026-08-12');assert.strictEqual(calls,2,'planning context cache must expire');listeners['my-performance-state-saved']();E.planDay('2026-08-12');assert.strictEqual(calls,3,'planning context must invalidate on mutation');
 }
-console.log('My Performance 2.9.0 Phase 2 performance contracts passed');
+console.log(`My Performance ${version.version} Phase 2 performance contracts passed`);
