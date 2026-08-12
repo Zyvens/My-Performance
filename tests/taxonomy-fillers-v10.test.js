@@ -1,0 +1,23 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const src=fs.readFileSync('taxonomy-fillers-v10.js','utf8');
+const main={id:'m1',title:'Main',questType:'main',domain:'Pessoal'},side={id:'s1',title:'Side',questType:'side',domain:'GSA'},custom=[side];
+const v3={campaigns:[{id:'c1',name:'Camp',groupId:'Estudos',missionIds:['m1'],priority:1}],missionMeta:{m1:{campaignId:'c1',groupId:'Pessoal'},s1:{groupId:'GSA'}},windows:[{id:'w1',groups:['Estudos'],start:60,end:120}]};
+const v5={sideQuestPacks:[{id:'pack-health',name:'Saude',missionIds:['s1'],active:true}],sideQuestMeta:{s1:{packId:'pack-health',active:true}},taxonomyV10:null};
+const groups=[{id:'GSA',name:'GSA'},{id:'Estudos',name:'Estudos'},{id:'Pessoal',name:'Pessoal'},{id:'grp-esp',name:'Espiritual'}];
+let saves=0;
+const B={model:()=>v3,groupForQuest:q=>q.domain||'Pessoal',campaignForQuest:q=>v3.campaigns.find(c=>c.missionIds.includes(q.id))||null,addCampaign(input){const c={id:'c'+(v3.campaigns.length+1),name:input.name,groupId:['GSA','Estudos','Pessoal'].includes(input.groupId)?input.groupId:'Pessoal',missionIds:[],priority:input.priority||2};v3.campaigns.push(c);return c},setMissionCampaign(id,cid){for(const c of v3.campaigns)c.missionIds=c.missionIds.filter(x=>x!==id);const c=v3.campaigns.find(x=>x.id===cid);if(c)c.missionIds.push(id);v3.missionMeta[id]={campaignId:cid,groupId:'Pessoal'};return c},normalizePriorities(){}};
+function pack(id){return v5.sideQuestPacks.find(p=>p.id===id)||null}
+const D={model:()=>v5,baseWindows:()=>v3.windows,pack,sideMeta:id=>v5.sideQuestMeta[id]||null,addPack(data){const p={id:'p'+(v5.sideQuestPacks.length+1),name:data.name,groupId:data.groupId,missionIds:[],active:true};v5.sideQuestPacks.push(p);return p},updatePack(id,patch){Object.assign(pack(id),patch);return true},deletePack(){return true},togglePack(){return true},addSideQuest(fid,data){const q={id:'s2',title:'Nova',questType:'side',domain:data.domain};custom.push(q);pack(fid).missionIds.push(q.id);v5.sideQuestMeta[q.id]={packId:fid};return q},updateSideQuest(){return true}};
+const G={groups:()=>groups.slice(),group:id=>groups.find(g=>g.id===id)||null,remove(){return true}};
+const ctx={window:{MyPerformanceCalendarModel:B,MyPerformanceCalendarDomain:D,MyPerformanceGroups:G},state:{customQuests:custom,overrides:{}},quests:()=>[main,...custom],questById:id=>[main,...custom].find(q=>q.id===id),saveState(){saves++},console};vm.createContext(ctx);vm.runInContext(src,ctx);
+const T=ctx.window.MyPerformanceTaxonomy;
+assert(T,'taxonomy API missing');
+assert.strictEqual(pack('pack-health').groupId,'Pessoal','known health Filler must belong to Pessoal');
+assert.strictEqual(B.groupForQuest(main),'Estudos','Main Quest must inherit Campaign Group');
+assert.strictEqual(B.groupForQuest(side),'Pessoal','Side Quest must inherit Filler Group');
+assert.strictEqual(v3.missionMeta.m1.groupId,undefined,'per-Main group override must be removed');
+const customCamp=B.addCampaign({name:'Fe',groupId:'grp-esp',priority:2});assert.strictEqual(customCamp.groupId,'grp-esp','custom Group must work for Campaign');
+const customFiller=D.addFiller({name:'Devocional',groupId:'grp-esp'});assert.strictEqual(customFiller.groupId,'grp-esp','custom Group must work for Filler');
+const q=D.addSideQuest(customFiller.id,{title:'Leitura'});assert.strictEqual(B.groupForQuest(q),'grp-esp','new Side Quest must inherit Filler Group');
+assert(T.summary('Estudos').mainCount>=1,'Group summary must count Main Quests');
+console.log('Taxonomy V10 Group -> Campaign/Filler inheritance passed');
