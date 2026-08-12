@@ -11,9 +11,9 @@
   const watchdog=setTimeout(()=>{forceToday();reveal('watchdog')},WATCHDOG_MS);
   function finish(){clearTimeout(watchdog);forceToday();if(typeof requestAnimationFrame==='function')requestAnimationFrame(finalRender);else setTimeout(finalRender,0)}
   function returnToday(renderNow=false){const changed=typeof state!=='undefined'&&state.plannerDate!==current();forceToday();if(renderNow&&changed)try{render()}catch{}return changed}
-  window.addEventListener('error',()=>reveal('degraded'),{once:true});window.addEventListener('unhandledrejection',()=>reveal('degraded'),{once:true});
-  window.addEventListener('pageshow',()=>returnToday(true));window.addEventListener('my-performance-cloud-loaded',()=>returnToday(true));document.addEventListener('visibilitychange',()=>{if(!document.hidden)returnToday(true)});
-  document.addEventListener('click',e=>{const todayNav=e.target?.closest?.('[data-view="today"]');if(todayNav)forceToday();const oldNav=e.target?.closest?.('#calPrev,#calNext');if(oldNav){e.preventDefault();e.stopImmediatePropagation();forceToday();try{toast('A agenda ativa é sempre o dia de hoje. O passado fica no backlog leve.')}catch{}try{render()}catch{}}},true);
-  if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',finish,{once:true});else queueMicrotask(finish);
+  window.addEventListener?.('error',()=>reveal('degraded'),{once:true});window.addEventListener?.('unhandledrejection',()=>reveal('degraded'),{once:true});
+  window.addEventListener?.('pageshow',()=>returnToday(true));window.addEventListener?.('my-performance-cloud-loaded',()=>returnToday(true));document.addEventListener?.('visibilitychange',()=>{if(!document.hidden)returnToday(true)});
+  document.addEventListener?.('click',e=>{const todayNav=e.target?.closest?.('[data-view="today"]');if(todayNav)forceToday();const oldNav=e.target?.closest?.('#calPrev,#calNext');if(oldNav){e.preventDefault();e.stopImmediatePropagation();forceToday();try{toast('A agenda ativa é sempre o dia de hoje. O passado fica no backlog leve.')}catch{}try{render()}catch{}}},true);
+  if(document.readyState==='loading')window.addEventListener?.('DOMContentLoaded',finish,{once:true});else queueMicrotask(finish);
   window.MyPerformanceBootReady={VERSION,finish,reveal,finalRender,forceToday};
 })();
