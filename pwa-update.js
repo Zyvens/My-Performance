@@ -1,8 +1,9 @@
 "use strict";
-/* PWA Update Manager — updates are applied automatically and the page is reloaded when a new worker takes control. */
+/* PWA Update Manager — automatic updates with throttled foreground checks. */
 (function(){
   if(!('serviceWorker' in navigator))return;
-  let refreshing=false,checking=false,updateInFlight=false,pendingVersion='';
+  let refreshing=false,checking=false,updateInFlight=false,pendingVersion='',lastCheckAt=0;
+  const FOREGROUND_MIN_GAP=10*60*1000,PERIODIC_INTERVAL=30*60*1000;
 
   const clientBuild=()=>String(document.documentElement.dataset.build||window.MyPerformanceRuntimeHealth?.BUILD||'').trim();
   function ensureBanner(){
@@ -31,13 +32,11 @@
       if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});
       const changed=await waitForController(before,10000);
       if(changed){cacheBust(pendingVersion);return}
-      // A new worker may already have activated/claimed without exposing a waiting worker.
-      // Force one cache-busted navigation so the document cannot continue running stale JS.
       cacheBust(pendingVersion)
     }catch(e){console.error('PWA automatic update failed',e);showUpdate(pendingVersion,'A atualização automática falhou. Toque para tentar novamente.');if(btn){btn.disabled=false;btn.textContent='Tentar novamente'}}finally{updateInFlight=false}
   }
   async function check(){
-    if(checking||updateInFlight)return;checking=true;
+    if(checking||updateInFlight)return;checking=true;lastCheckAt=Date.now();
     try{
       const reg=await navigator.serviceWorker.getRegistration();if(!reg)return;
       const remote=await serverVersion(),local=clientBuild();
@@ -50,14 +49,12 @@
       if(reg.waiting){pendingVersion=remote?.version||'latest';await applyUpdate(reg,pendingVersion)}
     }catch(e){console.warn('PWA update check failed',e)}finally{checking=false}
   }
+  function foregroundCheck(){if(Date.now()-lastCheckAt<FOREGROUND_MIN_GAP)return;setTimeout(check,100)}
 
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    // This is the missing step that previously left an already-open tab executing old JavaScript.
-    cacheBust(pendingVersion||'controller')
-  });
+  navigator.serviceWorker.addEventListener('controllerchange',()=>cacheBust(pendingVersion||'controller'));
   window.addEventListener('load',()=>setTimeout(check,350));
-  window.addEventListener('focus',()=>setTimeout(check,100));
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(check,100)});
-  setInterval(check,5*60*1000);
-  window.MyPerformancePWAUpdate={check,serverVersion,clientBuild,applyUpdate};
+  window.addEventListener('focus',foregroundCheck);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')foregroundCheck()});
+  setInterval(check,PERIODIC_INTERVAL);
+  window.MyPerformancePWAUpdate={check,serverVersion,clientBuild,applyUpdate,metrics:()=>({lastCheckAt,foregroundMinGapMs:FOREGROUND_MIN_GAP,periodicIntervalMs:PERIODIC_INTERVAL})};
 })();
