@@ -1,0 +1,1 @@
+const fs=require('fs'),assert=require('assert');const s=fs.readFileSync('sidequest-priority-v11.js','utf8');assert(s.includes('p.missionIds=[...ordered,...rest]'));console.log('Persisted priority source OK');
