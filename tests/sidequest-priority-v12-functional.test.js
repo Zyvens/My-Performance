@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const pack={id:'p',name:'P',missionIds:['c','a','b']};
+const qs=[{id:'a',questType:'side'},{id:'x',questType:'main'},{id:'b',questType:'side'},{id:'c',questType:'side'}];
+const ctx={console,state:{},quests:()=>qs.map(x=>({...x})),saveState(){},window:{MyPerformanceCalendarDomain:{pack:id=>id==='p'?pack:null,sideMeta:id=>['a','b','c'].includes(id)?{packId:'p'}:null,model:()=>({sideQuestPacks:[pack]}),recordRevision(){},log(){}},MyPerformanceSideQuestQuality:{scoreBonus:()=>0,allowed:()=>true,packForItem:item=>['a','b','c'].includes(item?.q?.id)?pack:null},MyPerformancePlannerEngine:{planDay(){return{slots:[]}},planWeek(){return[]},invalidate(){}}}};
+ctx.window.window=ctx.window;vm.createContext(ctx);vm.runInContext(fs.readFileSync('sidequest-priority-v11.js','utf8'),ctx);
+const ordered=ctx.window.MyPerformanceSideQuestPriority.priorityQuests().map(q=>q.id);
+assert.deepEqual(ordered,['c','x','a','b']);
+assert.equal(ctx.window.MyPerformanceSideQuestQuality.priorityRank({q:{id:'c'}}),0);
+assert.equal(ctx.window.MyPerformanceSideQuestQuality.priorityRank({q:{id:'b'}}),2);
+console.log('Side Quest priority V12 functional OK');
