@@ -1,1 +1,6 @@
-html.mp-booting .app-shell,html.mp-booting .bottom-nav{visibility:hidden}html.mp-booting body::after{content:'Carregando Planner…';position:fixed;inset:0;display:grid;place-items:center;background:#061711;color:#63e5b2;font:800 14px/1.2 system-ui;letter-spacing:.08em;z-index:99999}html:not(.mp-booting) body::after{display:none}
+html.mp-booting .app-shell,html.mp-booting .bottom-nav{visibility:hidden}
+html.mp-booting body::after{content:'Carregando Planner…';position:fixed;inset:0;display:grid;place-items:center;background:#061711;color:#63e5b2;font:800 14px/1.2 system-ui;letter-spacing:.08em;padding-top:72px;box-sizing:border-box;z-index:99999}
+html.mp-booting body::before{content:'';position:fixed;left:50%;top:50%;width:32px;height:32px;margin:-36px 0 0 -16px;border:3px solid rgba(99,229,178,.22);border-top-color:#63e5b2;border-right-color:#63e5b2;border-radius:50%;animation:mp-planner-buffer .72s linear infinite;z-index:100000;box-shadow:0 0 24px rgba(99,229,178,.14)}
+html:not(.mp-booting) body::after,html:not(.mp-booting) body::before{display:none}
+@keyframes mp-planner-buffer{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){html.mp-booting body::before{animation-duration:1.8s}}

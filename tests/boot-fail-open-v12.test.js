@@ -1,0 +1,17 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const code=fs.readFileSync('boot-ready-v11.js','utf8');
+const css=fs.readFileSync('boot-ready-v11.css','utf8');
+let booting=true,renderCalled=false;
+const timers=[];
+const doc={readyState:'complete',documentElement:{dataset:{},classList:{remove:n=>{if(n==='mp-booting')booting=false},add:()=>{}}}};
+const win={addEventListener:()=>{},dispatchEvent:()=>{}};
+const ctx={console,document:doc,window:win,CustomEvent:function(){},queueMicrotask:fn=>fn(),requestAnimationFrame:fn=>fn(),setTimeout:(fn,ms)=>{timers.push({fn,ms});return timers.length},clearTimeout:()=>{},render:()=>{renderCalled=true;assert.strictEqual(booting,false,'shell must be revealed before render');throw new Error('simulated render failure')}};
+win.window=win;vm.createContext(ctx);vm.runInContext(code,ctx);
+assert.strictEqual(booting,false,'boot gate must fail open immediately before final render');
+assert.strictEqual(doc.documentElement.dataset.runtimeReady,'1');
+const renderTimer=timers.find(x=>x.ms===0);assert(renderTimer,'final render must be scheduled asynchronously');renderTimer.fn();
+assert(renderCalled,'final render should still be attempted');
+assert.strictEqual(doc.documentElement.dataset.bootStatus,'degraded','render failure must degrade without restoring the loader');
+assert(code.includes('WATCHDOG_MS')&&code.includes("reveal('rendering')")&&code.includes('my-performance-boot-error'));
+assert(css.includes('@keyframes mp-planner-buffer')&&css.includes('animation:mp-planner-buffer'),'buffering spinner must be animated');
+console.log('Boot V12 fail-open + buffering regression passed');
