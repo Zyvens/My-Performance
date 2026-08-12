@@ -1,0 +1,11 @@
+const fs=require('fs'),assert=require('assert');
+const ui=fs.readFileSync('sidequest-priority-ui-v11.js','utf8');
+const policy=fs.readFileSync('sidequest-priority-v11.js','utf8');
+assert.match(ui,/function renumber\(details\)/,'drag UI must renumber visible priority badges');
+assert.match(ui,/renumber\(details\).*toast\('Prioridade do Filler atualizada\.'/s,'persist must renumber before rerender');
+assert.match(ui,/order=new Map/,'config rows must reopen in persisted missionIds order');
+assert.match(policy,/function priorityQuests\(\)/,'planner must receive filler-priority quest order');
+assert.match(policy,/withPriorityOrder/,'planner execution must apply persisted filler order');
+assert.match(policy,/\*1000/,'priority score must materially dominate ordinary side-quest tie breakers');
+assert.match(policy,/POLICY_VERSION='filler-priority-repeat-v12'/,'priority policy version must be v12');
+console.log('Side Quest priority V12 contract OK');
